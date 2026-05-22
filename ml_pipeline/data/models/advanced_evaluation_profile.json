@@ -1,0 +1,10 @@
+{
+  "version": "advanced-eval-profile-v1",
+  "thresholds": {
+    "squat_depth_good": 72,
+    "stability_good": 76,
+    "rhythm_good": 72,
+    "gyro_peak_alert": 3200,
+    "flex_peak_low": 16
+  }
+}

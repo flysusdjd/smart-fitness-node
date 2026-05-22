@@ -1,0 +1,16 @@
+{
+  "sessionId": "20260430_024246_bench_standard",
+  "label": "bench_standard",
+  "subjectId": "flysusdjd",
+  "notes": "开发者标签采集",
+  "startedAtIso": "2026-04-30T02:42:46.893000+08:00",
+  "startedAtMs": 1777488166893,
+  "stoppedAtIso": "2026-04-30T02:42:49.617000+08:00",
+  "stoppedAtMs": 1777488169617,
+  "stopReason": "manual_stop",
+  "csvPath": "C:\\Users\\flysusdjd\\Documents\\New project 3\\ml_pipeline\\data\\raw\\bench_standard\\20260430_024246_bench_standard.csv",
+  "metaPath": "C:\\Users\\flysusdjd\\Documents\\New project 3\\ml_pipeline\\data\\raw\\bench_standard\\20260430_024246_bench_standard.json",
+  "deviceName": "ESP32S3_Fitness_BLE",
+  "deviceAddress": "AC:A7:04:14:65:09",
+  "rowsWritten": 27
+}

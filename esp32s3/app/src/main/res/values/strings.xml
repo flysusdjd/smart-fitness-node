@@ -1,0 +1,204 @@
+<resources>
+    <string name="app_name">智能健身训练</string>
+
+    <string name="title_ble_monitor">智能健身训练</string>
+    <string name="subtitle_ble_monitor">动作识别、实时纠正与个人训练报告</string>
+
+    <string name="auth_title">登录你的训练账号</string>
+    <string name="auth_subtitle">手机端与电脑网页端共用同一套账号。连接到同一个后端地址后，就可以同步训练记录、评分结果和个人报告。</string>
+    <string name="auth_backend_label">服务器地址</string>
+    <string name="auth_backend_hint">例如：http://192.168.1.100:8787</string>
+    <string name="auth_username_label">用户名</string>
+    <string name="auth_password_label">密码</string>
+    <string name="auth_chip_recognition">动作识别</string>
+    <string name="auth_chip_feedback">实时纠正</string>
+    <string name="auth_status_idle">完成注册或登录后，即可进入训练平台。</string>
+    <string name="auth_status_registering">正在注册账号…</string>
+    <string name="auth_status_logging_in">正在登录…</string>
+    <string name="auth_status_guest">当前以游客模式进入，可以浏览页面并进行基础设备体验。</string>
+    <string name="auth_status_login_success">登录成功，正在进入训练页…</string>
+    <string name="auth_status_register_success">注册成功，请直接登录。</string>
+    <string name="auth_status_invalid_server">请填写可访问的后端地址</string>
+    <string name="auth_status_invalid_username">请输入用户名</string>
+    <string name="auth_status_invalid_password">请输入密码</string>
+    <string name="auth_sync_hint">手机和电脑只要填写同一个后端地址，账号、训练记录和报告就会自动互通。</string>
+    <string name="auth_form_title">账号登录</string>
+    <string name="auth_form_hint">输入电脑网关地址和账号密码，手机端会同步同一套训练数据。</string>
+    <string name="btn_register">注册账号</string>
+    <string name="btn_login">登录进入</string>
+    <string name="btn_guest">游客浏览</string>
+
+    <string name="account_panel_title">账号与设备</string>
+    <string name="account_mode_label">使用模式</string>
+    <string name="account_user_label">当前用户</string>
+    <string name="account_backend_label">后端地址</string>
+    <string name="account_mode_logged_in">已登录</string>
+    <string name="account_mode_guest">游客模式</string>
+    <string name="account_no_user">未登录</string>
+    <string name="account_no_backend">未配置</string>
+    <string name="btn_switch_account">切换账号</string>
+    <string name="btn_logout">退出登录</string>
+    <string name="btn_return_login">返回登录</string>
+    <string name="btn_login_account">登录账号</string>
+
+    <string name="home_overview_title">训练首页</string>
+    <string name="home_overview_hint">默认只展示训练结果、标准度与纠正建议。原始传感器数据将隐藏在调试模式中。</string>
+    <string name="today_duration_label">累计时长</string>
+    <string name="today_kcal_label">预估消耗</string>
+    <string name="today_avg_score_label">标准度</string>
+    <string name="today_sessions_label">训练次数</string>
+    <string name="summary_duration_value">%1$.1f 分钟</string>
+    <string name="summary_kcal_value">%1$.0f kcal</string>
+    <string name="summary_score_value">%1$.0f 分</string>
+    <string name="summary_sessions_value">%1$d 次</string>
+
+    <string name="training_overview_title">训练中心</string>
+    <string name="training_overview_hint">先连接设备，再开始一组动作训练。系统会实时识别深蹲、卧推等动作，计算标准度并给出语音纠正反馈。</string>
+    <string name="scan_hint">连接成功后直接开始训练，普通用户不需要手动选择训练标签。</string>
+    <string name="label_hint">本地记录名称（可选）</string>
+    <string name="training_flow_title">训练流程</string>
+    <string name="training_flow_connect">连接设备</string>
+    <string name="training_flow_start">开始训练</string>
+    <string name="training_flow_feedback">实时纠正</string>
+    <string name="training_flow_report">生成报告</string>
+
+    <string name="evaluation_panel_title">实时训练反馈</string>
+    <string name="evaluation_panel_hint">当前页面突出显示动作识别、标准度评分、风险等级和纠正建议。</string>
+    <string name="eval_action_label">当前动作</string>
+    <string name="eval_phase_label">动作阶段</string>
+    <string name="eval_score_label">标准度评分</string>
+    <string name="eval_risk_label">风险等级</string>
+    <string name="eval_suggestion_label">纠正建议</string>
+    <string name="eval_voice_label">语音状态</string>
+    <string name="score_unit">分</string>
+
+    <string name="record_panel_title">训练记录</string>
+    <string name="record_panel_hint">训练开始后将自动记录采样点数和保存文件，方便后续生成报告或回放分析。</string>
+    <string name="record_idle">暂未开始训练</string>
+    <string name="record_file_label">保存文件</string>
+    <string name="record_count_label">已采样点数</string>
+
+    <string name="guide_panel_title">佩戴说明与动作库</string>
+    <string name="guide_wear_title">传感器佩戴建议</string>
+    <string name="guide_wear_content">深蹲：IMU 固定在左腿外侧偏下的小腿上端，柔性传感器贴在左膝前外侧。卧推：IMU 固定在前臂外侧，柔性传感器贴在肘关节弯曲侧。</string>
+    <string name="guide_action_title">动作要点</string>
+    <string name="guide_action_content">开始训练前先自然站立 1 到 2 秒完成基线稳定；训练过程中保持节奏均匀，方便系统分析标准度和进步趋势。</string>
+
+    <string name="history_panel_title">个人训练报告</string>
+    <string name="history_panel_hint">这里展示近期训练统计、最近一次评分和训练结果摘要。</string>
+    <string name="history_total_sessions_label">累计训练</string>
+    <string name="history_total_duration_label">累计时长</string>
+    <string name="history_average_score_label">平均评分</string>
+    <string name="history_latest_action_label">最近动作</string>
+    <string name="history_latest_score_label">最近评分</string>
+    <string name="history_latest_risk_label">最近风险</string>
+    <string name="history_empty">暂无训练历史，先完成一组训练吧。</string>
+    <string name="history_loading">正在同步训练报告…</string>
+
+    <string name="settings_panel_title">设置与调试</string>
+    <string name="settings_panel_hint">普通用户不需要查看底层传感器数据；如需检查 BLE、弯曲电压或原始包，可打开调试模式。</string>
+    <string name="debug_panel_title">调试模式</string>
+    <string name="data_hint">这里保留设备侧详细数据，主要用于调试观察与信号核对。</string>
+    <string name="raw_packet_label">原始数据包</string>
+    <string name="waiting_for_data">等待数据…</string>
+
+    <string name="btn_scan">扫描设备</string>
+    <string name="btn_disconnect">断开连接</string>
+    <string name="btn_start_record">开始训练</string>
+    <string name="btn_stop_record">结束训练</string>
+    <string name="btn_voice_disable">关闭语音</string>
+    <string name="btn_voice_enable">开启语音</string>
+    <string name="btn_voice_retry">重新检测语音</string>
+    <string name="btn_toggle_debug_off">打开调试模式</string>
+    <string name="btn_toggle_debug_on">关闭调试模式</string>
+    <string name="nav_home">首页</string>
+    <string name="nav_training">训练</string>
+    <string name="nav_guide">指导</string>
+    <string name="nav_report">报告</string>
+    <string name="nav_settings">设置</string>
+    <string name="home_quick_title">今日训练概览</string>
+    <string name="home_quick_hint">手机端与电脑网页端共用同一个账号和后端地址。完成训练后，训练记录、标准度评分和报告会进入同一套系统。</string>
+    <string name="home_training_state">训练状态</string>
+    <string name="home_device_state">设备状态</string>
+
+    <string name="metric_seq">序号</string>
+    <string name="metric_time">时间</string>
+    <string name="metric_acc">加速度</string>
+    <string name="metric_gyro">角速度</string>
+    <string name="metric_flex_adc">弯曲 ADC</string>
+    <string name="metric_flex_mv">弯曲电压</string>
+    <string name="metric_flex_index">弯曲指数</string>
+
+    <string name="metric_seq_value">#%1$d</string>
+    <string name="metric_time_value">%1$d ms</string>
+    <string name="metric_acc_value">X=%1$d  Y=%2$d  Z=%3$d</string>
+    <string name="metric_gyro_value">X=%1$d  Y=%2$d  Z=%3$d</string>
+    <string name="metric_flex_adc_value">%1$d</string>
+    <string name="metric_flex_mv_value">%1$d mV</string>
+    <string name="metric_flex_index_value">%1$d %%</string>
+    <string name="metric_eval_score_value">%1$d</string>
+    <string name="raw_packet_value">%1$s</string>
+    <string name="record_file_value">%1$s</string>
+    <string name="record_count_value">%1$d</string>
+
+    <string name="status_idle">未连接</string>
+    <string name="status_no_scan_permission">没有扫描权限</string>
+    <string name="status_bluetooth_off">蓝牙未开启</string>
+    <string name="status_scanning">正在扫描设备…</string>
+    <string name="status_scan_timeout">扫描超时，请确认设备已上电并重新尝试</string>
+    <string name="status_scanner_error">无法获取蓝牙扫描器</string>
+    <string name="status_device_found">已找到设备，准备连接</string>
+    <string name="status_permission_error">蓝牙权限不足</string>
+    <string name="status_scan_exception">扫描失败</string>
+    <string name="status_no_connect_permission">没有连接权限</string>
+    <string name="status_connecting">正在连接设备…</string>
+    <string name="status_connect_failed">连接失败</string>
+    <string name="status_connected">设备已连接，正在协商数据通道</string>
+    <string name="status_disconnecting">正在断开连接…</string>
+    <string name="status_disconnected">设备已断开</string>
+    <string name="status_service_not_found">未找到目标服务</string>
+    <string name="status_char_not_found">未找到目标特征值</string>
+    <string name="status_subscribed">已订阅实时数据</string>
+    <string name="status_subscribe_failed">订阅实时数据失败</string>
+    <string name="status_error_generic">发生未知错误</string>
+    <string name="status_invalid_packet">收到的数据格式不完整</string>
+    <string name="status_requesting_mtu">正在申请更大的蓝牙数据包</string>
+
+    <string name="record_status_idle">等待开始训练</string>
+    <string name="record_status_need_connection">请先连接设备并订阅数据</string>
+    <string name="record_status_started">训练已开始</string>
+    <string name="record_status_stopped">训练已结束</string>
+    <string name="record_status_saved">数据已保存到：%1$s</string>
+    <string name="record_status_failed">保存失败：%1$s</string>
+    <string name="record_status_no_session">当前没有正在进行的训练</string>
+    <string name="record_status_auto_stopped_disconnect">连接已断开，训练已自动停止</string>
+    <string name="record_status_default_label">未填写标签，已按 %1$s 保存本次训练。</string>
+    <string name="record_error_create_dir">无法创建采集目录</string>
+
+    <string name="eval_action_idle">静止</string>
+    <string name="eval_action_squat">深蹲</string>
+    <string name="eval_phase_idle">静止</string>
+    <string name="eval_phase_down">下蹲阶段</string>
+    <string name="eval_phase_up">起身阶段</string>
+    <string name="eval_phase_bottom">蹲底控制</string>
+    <string name="eval_phase_transition">过渡调整</string>
+    <string name="eval_risk_low">低</string>
+    <string name="eval_risk_medium">中</string>
+    <string name="eval_risk_high">高</string>
+    <string name="eval_risk_unknown">待评估</string>
+    <string name="eval_suggestion_idle">保持自然站立和稳定佩戴，准备开始下一组动作采集。</string>
+    <string name="eval_suggestion_depth">下蹲深度偏浅，建议继续屈膝并保持脚跟稳定。</string>
+    <string name="eval_suggestion_stability">动作晃动较明显，建议收紧核心并保持膝关节轨迹稳定。</string>
+    <string name="eval_suggestion_rhythm">下蹲与起身节奏偏急，建议放慢动作速度。</string>
+    <string name="eval_suggestion_good">当前深蹲动作整体稳定，可以继续保持。</string>
+    <string name="eval_voice_ready">语音已开启，等待纠正反馈</string>
+    <string name="eval_voice_disabled">语音已关闭</string>
+    <string name="eval_voice_initializing">语音正在初始化...</string>
+    <string name="eval_voice_unavailable">语音引擎未就绪</string>
+    <string name="eval_voice_test">语音反馈已开启</string>
+    <string name="eval_voice_depth">请继续下蹲，达到更稳定的动作深度。</string>
+    <string name="eval_voice_stability">请收紧核心，减少身体晃动。</string>
+    <string name="eval_voice_rhythm">请放慢下蹲和起身速度。</string>
+    <string name="eval_voice_good">动作整体稳定，可以继续保持。</string>
+    <string name="eval_voice_engine_error">当前手机语音引擎不可用，请检查系统 TTS 设置。</string>
+</resources>

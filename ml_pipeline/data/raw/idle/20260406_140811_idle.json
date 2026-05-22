@@ -1,0 +1,16 @@
+{
+  "sessionId": "20260406_140811_idle",
+  "label": "idle",
+  "subjectId": null,
+  "notes": null,
+  "startedAtIso": "2026-04-06T14:08:11.077000+08:00",
+  "startedAtMs": 1775455691077,
+  "stoppedAtIso": "2026-04-06T14:08:23.728000+08:00",
+  "stoppedAtMs": 1775455703728,
+  "stopReason": "manual_stop",
+  "csvPath": "C:\\Users\\flysusdjd\\Documents\\New project 3\\ml_pipeline\\data\\raw\\idle\\20260406_140811_idle.csv",
+  "metaPath": "C:\\Users\\flysusdjd\\Documents\\New project 3\\ml_pipeline\\data\\raw\\idle\\20260406_140811_idle.json",
+  "deviceName": "ESP32S3_Fitness_BLE",
+  "deviceAddress": "AC:A7:04:14:65:09",
+  "rowsWritten": 127
+}

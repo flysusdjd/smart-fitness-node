@@ -1,0 +1,926 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>智能健身训练平台</title>
+  <link rel="stylesheet" href="/static/styles.css?v=20260430a">
+  <script src="/static/app.js?v=20260430a" defer></script>
+</head>
+<body>
+  <div class="app-shell">
+    <header class="topbar">
+      <div class="brand-block">
+        <div class="brand-mark">SF</div>
+        <div>
+          <div class="brand-title">智能健身训练平台</div>
+          <div class="brand-subtitle" id="topbarSubtitle">账号登录与注册</div>
+        </div>
+      </div>
+
+      <nav class="main-nav" aria-label="主导航">
+        <a class="nav-link" data-route="/login" href="/login">登录</a>
+        <a class="nav-link" data-route="/dashboard" href="/dashboard">个人首页</a>
+        <a class="nav-link" data-route="/training" href="/training">训练中心</a>
+        <a class="nav-link" data-route="/history" href="/history">历史报告</a>
+        <button id="settingsDebugBtn" class="nav-link nav-button-link" data-route="/debug" type="button">设置</button>
+      </nav>
+
+      <div class="topbar-side">
+        <div class="topbar-status">
+          <span class="status-dot status-offline" id="statusDot"></span>
+          <div class="topbar-status-copy">
+            <span class="status-label">设备状态</span>
+            <strong class="status-text" id="statusText">未连接设备</strong>
+          </div>
+        </div>
+        <div class="user-pill">
+          <span class="user-pill-label">当前账号</span>
+          <strong id="topbarUserText">游客模式</strong>
+        </div>
+      </div>
+    </header>
+
+    <main class="route-shell">
+      <section class="route-page" id="page-login">
+        <section class="hero-card login-layout">
+          <div class="hero-panel">
+            <p class="eyebrow">Welcome</p>
+            <h1>先登录，再开始你的个性化训练</h1>
+            <p class="hero-text">
+              平台支持柔性弯曲传感器与六轴 IMU 联合识别，可在训练过程中给出动作识别、次数统计、
+              标准度评分与实时纠正建议。
+            </p>
+
+            <div class="hero-pill-row">
+              <span class="hero-pill">深蹲识别</span>
+              <span class="hero-pill">卧推动作</span>
+              <span class="hero-pill">实时反馈</span>
+              <span class="hero-pill">历史报告</span>
+            </div>
+
+            <div class="hero-highlights">
+              <div class="stat-card">
+                <span>当前模式</span>
+                <strong id="authStatusTag">未登录</strong>
+              </div>
+              <div class="stat-card">
+                <span>当前账号</span>
+                <strong id="authCurrentUser">未登录</strong>
+              </div>
+              <div class="stat-card">
+                <span>Token 到期</span>
+                <strong id="authTokenExpiry">-</strong>
+              </div>
+            </div>
+
+            <p class="hint" id="authHint">登录后可同步训练记录、评分结果和历史报告。</p>
+          </div>
+
+          <div class="auth-card">
+            <div class="auth-header">
+              <div>
+                <p class="eyebrow">Account</p>
+                <h2>注册与登录</h2>
+              </div>
+              <button id="logoutBtn" class="ghost-btn" type="button">退出登录</button>
+            </div>
+
+            <div class="auth-tabs" aria-label="身份切换">
+              <button id="authTabRegister" class="auth-tab active" type="button">注册</button>
+              <button id="authTabLogin" class="auth-tab" type="button">登录</button>
+            </div>
+
+            <section id="registerPanel" class="auth-panel">
+              <label class="field">
+                <span>用户名</span>
+                <input id="registerUsername" type="text" autocomplete="username">
+              </label>
+              <label class="field">
+                <span>密码</span>
+                <input id="registerPassword" type="password" autocomplete="new-password">
+              </label>
+              <div class="button-row">
+                <button id="registerBtn" type="button">创建账号</button>
+              </div>
+            </section>
+
+            <section id="loginPanel" class="auth-panel hidden">
+              <label class="field">
+                <span>用户名</span>
+                <input id="loginIdentity" type="text" autocomplete="username">
+              </label>
+              <label class="field">
+                <span>密码</span>
+                <input id="loginPassword" type="password" autocomplete="current-password">
+              </label>
+              <div class="button-row">
+                <button id="loginBtn" type="button">立即登录</button>
+              </div>
+            </section>
+
+            <div class="auth-meta">
+              <button id="enterAsGuestBtn" class="secondary-btn" type="button">游客进入首页</button>
+              <button id="openDebugBtn" class="ghost-btn" type="button">开发者设置</button>
+            </div>
+          </div>
+        </section>
+      </section>
+
+      <section class="route-page hidden" id="page-dashboard">
+        <div class="dashboard-topline" aria-label="账户状态">
+          <button class="icon-button" type="button" aria-label="消息提醒">⌁</button>
+          <div class="dashboard-avatar" aria-hidden="true">SF</div>
+          <div class="dashboard-account-copy">
+            <strong id="dashboardTopUserValue">linjinyu</strong>
+            <span>训练账号</span>
+          </div>
+        </div>
+
+        <div class="dashboard-layout">
+          <div class="dashboard-main-column">
+            <section class="dashboard-hero">
+              <div class="dashboard-hero-copy">
+                <h2><span id="dashboardHeroUserValue">欢迎回来，linjinyu</span> <span class="wave-mark">⌁</span></h2>
+                <p class="page-copy" id="dashboardHeroSummaryValue">今天是训练的好时机，坚持科学训练，让每一次进步都看得见！</p>
+                <div class="dashboard-hero-metrics">
+                  <div class="hero-chip hero-chip-strong">
+                    <span class="chip-icon chip-fire">●</span>
+                    <span>累计训练</span>
+                    <strong id="dashboardTotalTrainingValue">0 天</strong>
+                  </div>
+                  <div class="hero-chip hero-chip-strong">
+                    <span class="chip-icon chip-calendar">●</span>
+                    <span>累计时长</span>
+                    <strong id="dashboardTotalDurationValue">0 小时</strong>
+                  </div>
+                </div>
+              </div>
+              <div class="dashboard-hero-art" aria-hidden="true">
+                <div class="art-orbit art-orbit-large"></div>
+                <div class="art-orbit art-orbit-small"></div>
+                <div class="art-leaf art-leaf-one"></div>
+                <div class="art-leaf art-leaf-two"></div>
+                <div class="art-device-cube"></div>
+                <div class="art-fabric">
+                  <span class="art-fabric-line"></span>
+                  <span class="art-fabric-dot"></span>
+                </div>
+                <div class="art-chip">
+                  <span></span>
+                  <span></span>
+                  <span></span>
+                </div>
+                <div class="art-ribbon"></div>
+                <div class="art-signal art-signal-one"></div>
+                <div class="art-signal art-signal-two"></div>
+              </div>
+            </section>
+
+            <div class="dashboard-grid">
+              <section class="panel profile-summary">
+                <div class="panel-head">
+                  <div class="card-title-row">
+                    <span class="title-icon sun-icon">●</span>
+                    <h3>今日概览</h3>
+                  </div>
+                  <span class="subtle-meta">更新时间 18:22</span>
+                  <span class="tag" id="homeModeTag">游客模式</span>
+                </div>
+
+                <p class="page-copy dashboard-intro"><strong id="homeWelcomeValue">训练访客</strong></p>
+                <p class="page-copy dashboard-intro" id="homeIntroValue">登录账号后，训练记录、评分和报告会持续同步到你的个人中心。</p>
+
+                <div class="stats-grid today-metric-grid">
+                  <article class="stat-card stat-card-icon">
+                    <span>训练时长</span>
+                    <strong id="homeDurationValue">0 分钟</strong>
+                    <i class="metric-dot metric-green"></i>
+                  </article>
+                  <article class="stat-card stat-card-icon">
+                    <span>动作次数</span>
+                    <strong id="dashboardTodayRepsValue">0 次</strong>
+                    <i class="metric-dot metric-green"></i>
+                  </article>
+                  <article class="stat-card stat-card-icon">
+                    <span>消耗热量</span>
+                    <strong id="homeCaloriesValue">0 kcal</strong>
+                    <i class="metric-dot metric-orange"></i>
+                  </article>
+                  <article class="stat-card stat-card-icon">
+                    <span>训练状态</span>
+                    <strong id="homeActionValue">静止</strong>
+                    <i class="metric-dot metric-green"></i>
+                  </article>
+                </div>
+              </section>
+
+              <section class="panel weekly-score-card">
+                <div class="panel-head">
+                  <div class="card-title-row">
+                    <span class="title-icon shield-icon">●</span>
+                    <h3>动作标准度</h3>
+                  </div>
+                  <span class="tag">0-100 分</span>
+                </div>
+                <div class="mini-score-ring">
+                  <strong id="weekAverageScoreValue">0</strong>
+                  <span>标准度评分</span>
+                </div>
+                <p class="page-copy weekly-caption">本周平均 <strong id="dashboardAverageScoreBadge">0</strong> 分，分数越高代表动作越接近标准姿态。</p>
+                <div class="trend-bars compact-trend" id="weekTrendBars">
+                  <p class="empty-copy">暂无本周趋势数据。</p>
+                </div>
+                <span class="hidden" id="weekSessionCountValue">0 次</span>
+              </section>
+
+              <section class="panel dashboard-recent-summary">
+                <div class="panel-head">
+                  <div class="card-title-row">
+                    <span class="title-icon recent-icon">●</span>
+                    <h3>最近训练</h3>
+                  </div>
+                  <button id="dashboardOpenHistoryBtn" class="text-btn compact-link" type="button">查看全部</button>
+                </div>
+
+                <div class="recent-list">
+                  <article class="recent-row">
+                    <span class="recent-icon-dot green-dot">●</span>
+                    <div>
+                      <strong id="recentActionValue">-</strong>
+                      <p id="recentTimeValue">暂无最近训练时间</p>
+                    </div>
+                    <div>
+                      <span>标准度</span>
+                      <strong id="recentScoreValue">0</strong>
+                    </div>
+                  </article>
+                  <article class="recent-row">
+                    <span class="recent-icon-dot orange-dot">●</span>
+                    <div>
+                      <strong>累计动作次数</strong>
+                      <p id="recentRiskValue">待评估</p>
+                    </div>
+                    <div>
+                      <span>次数</span>
+                      <strong id="recentCountValue">0 次</strong>
+                    </div>
+                  </article>
+                </div>
+              </section>
+            </div>
+
+            <section class="dashboard-cta-card">
+              <div class="cta-icon" aria-hidden="true">↗</div>
+              <div>
+                <h3>开始今日训练</h3>
+                <p>连接设备后开始训练，系统会自动识别动作并生成本次报告。</p>
+              </div>
+              <div class="cta-flow" aria-label="训练流程">
+                <span><b>01</b> 连接设备</span>
+                <span><b>02</b> 开始训练</span>
+                <span><b>03</b> 生成报告</span>
+              </div>
+              <button id="homeStartTrainingBtn" type="button">开始训练</button>
+              <button id="dashboardPrimaryTrainBtn" class="hidden" type="button">开始今日训练</button>
+              <button id="dashboardQuickTrainBtn" class="hidden" type="button">立即开始训练</button>
+              <button id="goLoginPageBtn" class="hidden" type="button">返回登录页</button>
+            </section>
+
+            <section class="panel panel-wide dashboard-guide-panel">
+              <div class="panel-head">
+                <div>
+                  <p class="eyebrow">Guide</p>
+                  <h3>动作库与佩戴说明</h3>
+                </div>
+                <div class="guide-chip-row">
+                  <span class="status-dot status-offline" id="guideBleDot"></span>
+                  <span class="tag" id="guideBleText">设备未连接</span>
+                </div>
+              </div>
+
+              <div class="guide-grid">
+                <article class="guide-card">
+                  <div class="guide-visual">深蹲佩戴示意</div>
+                  <h4>深蹲</h4>
+                  <ul>
+                    <li>IMU 建议固定在左腿膝关节外侧附近或护膝外侧，板面朝外。</li>
+                    <li>柔性传感器跨过左膝前外侧，弯曲方向跟随膝关节，避免贴在膝窝后侧。</li>
+                    <li>整批深蹲数据保持同一佩戴位置，采集前自然站立 1 到 2 秒。</li>
+                  </ul>
+                </article>
+
+                <article class="guide-card">
+                  <div class="guide-visual">卧推佩戴示意</div>
+                  <h4>卧推</h4>
+                  <ul>
+                    <li>IMU 建议固定在同一侧发力手臂的肘外侧附近或前臂近肘外侧。</li>
+                    <li>柔性传感器跨过肘关节外侧或后外侧，避免贴在肘窝内侧被夹住。</li>
+                    <li>标准和错误卧推都保持同一佩戴位置，错误样本先固定一种模式。</li>
+                  </ul>
+                </article>
+              </div>
+            </section>
+          </div>
+
+          <aside class="dashboard-side-column">
+            <section class="panel feedback-card">
+              <div class="panel-head">
+                <div class="card-title-row">
+                  <span class="title-icon signal-icon">●</span>
+                  <h3>训练反馈</h3>
+                </div>
+                <span class="subtle-meta">本次训练</span>
+              </div>
+              <div class="side-score-ring">
+                <strong id="homeScoreValue">0</strong>
+                <span>标准度评分</span>
+              </div>
+              <div class="side-feedback-meta">
+                <p>动作完成度：<strong id="dashboardCompletionValue">0%</strong></p>
+                <p>稳定性：<strong id="dashboardStabilityValue">待评估</strong></p>
+              </div>
+              <div class="correction-card">
+                <span>纠正建议</span>
+                <p id="homeAdviceValue">连接设备后可获得针对当前动作的实时建议。</p>
+              </div>
+              <button id="dashboardOpenHistoryBtnSide" class="ghost-btn full-width" type="button">查看详细报告</button>
+            </section>
+
+            <section class="panel coach-card">
+              <div class="panel-head">
+                <div class="card-title-row">
+                  <span class="title-icon coach-icon">●</span>
+                  <h3>训练小贴士</h3>
+                </div>
+              </div>
+              <p>“科学训练、循序渐进，身体会给你最好的反馈。”</p>
+              <div class="coach-visual" aria-hidden="true"></div>
+            </section>
+          </aside>
+        </div>
+      </section>
+
+      <section class="route-page hidden" id="page-training">
+        <section class="page-head">
+          <div>
+            <p class="eyebrow">Training</p>
+            <h2>训练中心</h2>
+            <p class="page-copy">确认佩戴位置并连接设备后直接开始训练，系统会自动识别动作、统计次数并给出纠正建议。</p>
+          </div>
+        </section>
+
+        <div class="training-grid">
+          <aside class="panel training-side">
+            <div class="panel-head">
+              <div>
+                <p class="eyebrow">Plan</p>
+                <h3>自动识别训练</h3>
+              </div>
+              <span class="tag" id="trainingSessionTag">等待训练</span>
+            </div>
+
+            <article class="training-mode-card">
+              <span class="tag">实时反馈</span>
+              <h4>开始训练后自动识别动作</h4>
+              <p id="trainingLabelHint">开始训练后，系统会根据实时传感器数据自动识别动作类型，并生成次数、评分和纠正建议。</p>
+            </article>
+
+            <article class="training-step-card">
+              <span class="step-index">01</span>
+              <div>
+                <strong>佩戴说明</strong>
+                <p id="trainingWearGuide">开始训练后，这里会根据识别到的动作提示佩戴与训练要点。</p>
+              </div>
+            </article>
+
+            <article class="training-step-card">
+              <span class="step-index">02</span>
+              <div>
+                <strong>设备连接</strong>
+                <div class="device-checkline training-connection-line">
+                  <span class="status-dot status-offline" id="trainingConnectDot"></span>
+                  <span id="trainingConnectText">设备未连接</span>
+                </div>
+              </div>
+            </article>
+
+            <label class="field">
+              <span>设备列表</span>
+              <select id="deviceSelect"></select>
+            </label>
+
+            <div class="button-row">
+              <button id="scanBtn" type="button">扫描设备</button>
+              <button id="connectBtn" type="button">连接设备</button>
+              <button id="disconnectBtn" class="ghost-btn" type="button">断开连接</button>
+            </div>
+
+            <label class="field">
+              <span>训练备注（可选）</span>
+              <textarea id="notesInput" rows="4"></textarea>
+            </label>
+
+            <div class="button-row stacked">
+              <button id="startRecordingBtn" type="button">开始训练</button>
+              <button id="stopRecordingBtn" class="danger-btn" type="button">完成训练并生成报告</button>
+            </div>
+
+            <div class="summary-stack">
+              <div class="soft-chip">
+                <span>当前设备</span>
+                <strong id="trainingDeviceBadge">未连接</strong>
+              </div>
+              <div class="soft-chip">
+                <span>识别动作</span>
+                <strong id="trainingLabelBadge">静止</strong>
+              </div>
+              <div class="soft-chip">
+                <span>训练状态</span>
+                <strong id="trainingRecordBadge">未开始</strong>
+              </div>
+            </div>
+
+            <p class="hint" id="trainingAccessHint">请先登录。游客模式可以浏览训练流程，但不能真正连接设备或开始训练。</p>
+          </aside>
+
+          <section class="panel training-main">
+            <div class="training-live-head">
+              <div>
+                <p class="eyebrow">Realtime</p>
+                <h3>实时训练反馈</h3>
+              </div>
+            </div>
+
+            <div class="training-feedback-grid">
+              <article class="panel nested-panel">
+                <div class="panel-head">
+                  <div>
+                    <span class="small-label">动作识别结果</span>
+                    <strong id="trainingActionValue">静止</strong>
+                  </div>
+                  <div>
+                    <span class="small-label">动作阶段</span>
+                    <strong id="trainingPhaseValue">空闲</strong>
+                  </div>
+                </div>
+
+                <div class="training-score-strip">
+                  <div class="stat-card">
+                    <span>累计次数</span>
+                    <strong id="trainingRepCountValue">0</strong>
+                  </div>
+                  <div class="stat-card" id="trainingRiskCard">
+                    <span>风险等级</span>
+                    <strong id="trainingRiskValue">待评估</strong>
+                  </div>
+                  <div class="stat-card">
+                    <span>接收包数</span>
+                    <strong id="trainingPacketsValue">0</strong>
+                  </div>
+                </div>
+
+                <p class="hint" id="trainingRepHintValue">等待完整动作循环</p>
+              </article>
+
+              <article class="panel nested-panel">
+                <div class="score-ring" id="scoreRing">
+                  <div class="score-ring-inner">
+                    <span>标准度评分</span>
+                    <strong id="trainingScoreValue">0</strong>
+                  </div>
+                </div>
+              </article>
+            </div>
+
+            <div class="training-feedback-grid training-feedback-details">
+              <article class="panel nested-panel">
+                <span class="small-label">实时纠正建议</span>
+                <h4 id="trainingSuggestionValue">开始训练后，这里会显示当前动作的实时纠正建议。</h4>
+                <p class="page-copy" id="trainingRiskHintValue">开始训练后显示本次动作的主要风险点。</p>
+              </article>
+
+              <article class="panel nested-panel">
+                <div class="panel-head">
+                  <div>
+                    <span class="small-label">动作质量指标</span>
+                    <strong>实时评分</strong>
+                  </div>
+                </div>
+
+                <div class="stats-grid compact">
+                  <article class="stat-card">
+                    <span>动作幅度</span>
+                    <strong id="trainingDepthValue">0</strong>
+                  </article>
+                  <article class="stat-card">
+                    <span>动作稳定性</span>
+                    <strong id="trainingStabilityValue">0</strong>
+                  </article>
+                  <article class="stat-card">
+                    <span>节奏控制</span>
+                    <strong id="trainingRhythmValue">0</strong>
+                  </article>
+                </div>
+              </article>
+            </div>
+
+            <article class="panel nested-panel training-summary-card">
+              <div class="panel-head">
+                <div>
+                  <p class="eyebrow">Summary</p>
+                  <h3>训练摘要</h3>
+                </div>
+              </div>
+              <div class="stats-grid single-column">
+                <article class="stat-card">
+                  <span>最新动作</span>
+                  <strong id="trainingLatestActionValue">静止</strong>
+                </article>
+                <article class="stat-card">
+                  <span>最新评分</span>
+                  <strong id="trainingLatestScoreValue">0</strong>
+                </article>
+                <article class="stat-card">
+                  <span>最新建议</span>
+                  <strong id="trainingLatestAdviceValue">等待训练开始</strong>
+                </article>
+              </div>
+            </article>
+          </section>
+        </div>
+      </section>
+
+      <section class="route-page hidden" id="page-history">
+        <section class="page-head">
+          <div>
+            <p class="eyebrow">History</p>
+            <h2>历史报告中心</h2>
+            <p class="page-copy">查看和上次训练相比的进步情况，以及近期风险统计。</p>
+          </div>
+        </section>
+
+        <div class="history-grid">
+          <section class="panel">
+            <div class="panel-head">
+              <div>
+                <p class="eyebrow">Progress</p>
+                <h3>对比分析</h3>
+              </div>
+            </div>
+            <div class="stats-grid compact">
+              <article class="stat-card">
+                <span>标准度变化</span>
+                <strong id="historyProgressValue">登录后可查看你的历史训练对比</strong>
+              </article>
+              <article class="stat-card">
+                <span>稳定性变化</span>
+                <strong id="historyStabilityProgressValue">当前为游客模式，尚未绑定个人记录。</strong>
+              </article>
+            </div>
+          </section>
+
+          <section class="panel">
+            <div class="panel-head">
+              <div>
+                <p class="eyebrow">Risk</p>
+                <h3>本周风险统计</h3>
+              </div>
+            </div>
+            <div class="risk-list" id="historyRiskList">
+              <p class="empty-copy">请先登录以查看个人风险统计。</p>
+            </div>
+          </section>
+
+          <section class="panel panel-wide">
+            <div class="panel-head">
+              <div>
+                <p class="eyebrow">Sessions</p>
+                <h3>最近训练记录</h3>
+              </div>
+            </div>
+            <div class="history-session-list" id="historySessionList">
+              <p class="empty-copy">请先登录以查看个人历史训练记录。</p>
+            </div>
+          </section>
+        </div>
+      </section>
+
+      <section class="route-page hidden" id="page-debug">
+        <section class="page-head">
+          <div>
+            <p class="eyebrow">Settings</p>
+            <h2>设置 / 开发者模式</h2>
+            <p class="page-copy">普通用户不需要进入这里；这里集中查看原始监控信息、训练模型、管理标签与可视化曲线。</p>
+          </div>
+        </section>
+
+        <div class="debug-grid">
+          <section class="panel">
+            <div class="panel-head">
+              <div>
+                <p class="eyebrow">Status</p>
+                <h3>系统状态</h3>
+              </div>
+            </div>
+            <div class="stats-grid compact">
+              <article class="stat-card">
+                <span>数据库</span>
+                <strong id="debugDatabaseBadge">未启用</strong>
+              </article>
+              <article class="stat-card">
+                <span>模型状态</span>
+                <strong id="debugModelBadge">未加载</strong>
+              </article>
+              <article class="stat-card">
+                <span>设备连接</span>
+                <strong id="debugConnectionBadge">未连接</strong>
+              </article>
+              <article class="stat-card">
+                <span>录制状态</span>
+                <strong id="debugRecordingBadge">未录制</strong>
+              </article>
+            </div>
+            <p class="hint" id="debugDatabaseStateText">数据库未启用</p>
+          </section>
+
+          <section class="panel">
+            <div class="panel-head">
+              <div>
+                <p class="eyebrow">Labels</p>
+                <h3>标签管理</h3>
+              </div>
+            </div>
+            <p class="hint">标签用于开发者采集训练数据。删除标签会删除该标签下的原始 CSV/JSON 数据，请谨慎操作。</p>
+            <label class="field">
+              <span>新增标签名</span>
+              <input id="debugNewLabelInput" type="text">
+            </label>
+            <div class="button-row">
+              <button id="debugCreateLabelBtn" type="button">创建标签</button>
+            </div>
+            <div class="debug-label-list" id="debugLabelList">
+              <p class="empty-copy">等待加载标签...</p>
+            </div>
+          </section>
+
+          <section class="panel">
+            <div class="panel-head">
+              <div>
+                <p class="eyebrow">Capture</p>
+                <h3>开发者采集数据</h3>
+              </div>
+            </div>
+            <p class="hint" id="debugCaptureHint">这里用于给模型采集带标签的数据。开始前请先连接设备。</p>
+            <label class="field">
+              <span>采集标签</span>
+              <select id="debugCaptureLabelSelect"></select>
+            </label>
+            <label class="field">
+              <span>采集备注</span>
+              <textarea id="debugCaptureNotesInput" rows="3"></textarea>
+            </label>
+            <div class="button-row stacked">
+              <button id="debugStartCaptureBtn" type="button">开始标签采集</button>
+              <button id="debugStopCaptureBtn" class="danger-btn" type="button">结束标签采集</button>
+            </div>
+            <div class="summary-stack">
+              <div class="soft-chip">
+                <span>当前标签</span>
+                <strong id="debugCaptureActiveLabel">未开始</strong>
+              </div>
+              <div class="soft-chip">
+                <span>采集状态</span>
+                <strong id="debugCaptureStatusValue">未开始</strong>
+              </div>
+            </div>
+          </section>
+
+          <section class="panel panel-wide debug-collapsible-panel">
+            <details open>
+              <summary class="debug-collapse-summary">
+                <div>
+                  <p class="eyebrow">Records</p>
+                  <h3>训练模型记录</h3>
+                </div>
+                <span class="tag">点击折叠</span>
+              </summary>
+
+              <div class="debug-record-toolbar">
+                <label class="field inline-field">
+                  <span>视图类型</span>
+                  <select id="debugRecordViewType">
+                    <option value="list">列表视图</option>
+                    <option value="timeline">时间视图</option>
+                  </select>
+                </label>
+                <label class="field inline-field">
+                  <span>操作模式</span>
+                  <select id="debugRecordActionType">
+                    <option value="view">查看</option>
+                    <option value="delete">删除</option>
+                  </select>
+                </label>
+                <button id="debugRefreshRecordsBtn" class="ghost-btn" type="button">刷新记录</button>
+              </div>
+
+              <div class="history-session-list" id="debugRecordingsList">
+                <p class="empty-copy">等待加载训练记录...</p>
+              </div>
+            </details>
+          </section>
+
+          <section class="panel panel-wide">
+            <div class="panel-head">
+              <div>
+                <p class="eyebrow">Model</p>
+                <h3>管理员训练模型</h3>
+              </div>
+              <div class="button-row">
+                <button id="debugRefreshTrainingBtn" class="ghost-btn" type="button">刷新状态</button>
+                <button id="debugClearTrainingBtn" class="ghost-btn" type="button">清空训练状态</button>
+                <button id="debugReloadModelBtn" class="secondary-btn" type="button">重载模型</button>
+              </div>
+              <p class="hint">这里的“清空训练状态”只会清空模型训练面板状态，不会删除下方采集记录。删除采集数据请在“训练模型记录”里切换到删除模式。</p>
+            </div>
+
+            <div class="training-admin-grid">
+              <div class="panel nested-panel">
+                <div class="panel-head">
+                  <div>
+                    <span class="small-label">训练标签</span>
+                    <strong id="debugTrainingLabelCount">0 个</strong>
+                  </div>
+                  <button id="debugSelectAllLabelsBtn" class="ghost-btn" type="button">全选 / 取消</button>
+                </div>
+                <div class="label-checklist" id="debugTrainingLabels"></div>
+              </div>
+
+              <div class="panel nested-panel">
+                <label class="field">
+                  <span>窗口大小</span>
+                  <input id="debugTrainWindowSize" type="number" min="5" step="1" value="20">
+                </label>
+                <label class="field">
+                  <span>步长</span>
+                  <input id="debugTrainStepSize" type="number" min="1" step="1" value="5">
+                </label>
+                <label class="checkbox-field">
+                  <input id="debugAutoReloadCheckbox" type="checkbox" checked>
+                  <span>训练成功后自动重载模型</span>
+                </label>
+
+                <div class="stats-grid compact">
+                  <article class="stat-card">
+                    <span>训练运行状态</span>
+                    <strong id="debugTrainingRunValue">空闲</strong>
+                  </article>
+                  <article class="stat-card">
+                    <span>训练阶段</span>
+                    <strong id="debugTrainingStageValue">空闲</strong>
+                  </article>
+                  <article class="stat-card">
+                    <span>最近成功时间</span>
+                    <strong id="debugTrainingLastSuccessValue">-</strong>
+                  </article>
+                  <article class="stat-card">
+                    <span>上次训练标签</span>
+                    <strong id="debugTrainingSelectedLabelsValue">暂无</strong>
+                  </article>
+                  <article class="stat-card">
+                    <span>样本组数</span>
+                    <strong id="debugTrainingSampleCountValue">0</strong>
+                  </article>
+                  <article class="stat-card">
+                    <span>预处理退出码</span>
+                    <strong id="debugTrainingPrepareExitValue">-</strong>
+                  </article>
+                  <article class="stat-card">
+                    <span>训练退出码</span>
+                    <strong id="debugTrainingTrainExitValue">-</strong>
+                  </article>
+                </div>
+
+                <div class="guide-card">
+                  <span class="small-label">最近一次错误</span>
+                  <p class="page-copy" id="debugTrainingErrorValue">无</p>
+                </div>
+
+                <div class="button-row">
+                  <button id="debugStartTrainingBtn" type="button">开始训练模型</button>
+                </div>
+              </div>
+            </div>
+
+            <div class="panel nested-panel">
+              <span class="small-label">训练输出日志</span>
+              <pre id="debugTrainingOutputBox">等待训练日志...</pre>
+            </div>
+          </section>
+
+          <section class="panel panel-wide">
+            <div class="panel-head">
+              <div>
+                <p class="eyebrow">Visualize</p>
+                <h3>弯曲传感器与六轴传感器可视化</h3>
+              </div>
+              <span class="tag" id="debugSensorSampleTag">0 点</span>
+            </div>
+
+            <div class="debug-live-grid">
+              <article class="debug-live-card">
+                <span class="small-label">Seq</span>
+                <strong id="debugSeqValue">-</strong>
+              </article>
+              <article class="debug-live-card">
+                <span class="small-label">Timestamp</span>
+                <strong id="debugTimestampValue">-</strong>
+              </article>
+              <article class="debug-live-card">
+                <span class="small-label">Flex ADC</span>
+                <strong id="debugFlexAdcValue">-</strong>
+              </article>
+              <article class="debug-live-card">
+                <span class="small-label">Flex mV</span>
+                <strong id="debugFlexMvValue">-</strong>
+              </article>
+              <article class="debug-live-card debug-live-card-accent">
+                <span class="small-label">Flex Index</span>
+                <strong id="debugFlexIndexValue">-</strong>
+              </article>
+            </div>
+
+            <div class="debug-axis-grid">
+              <article class="debug-axis-card">
+                <span class="small-label">加速度三轴</span>
+                <div class="debug-axis-values">
+                  <div><span>AX</span><strong id="debugAxValue">-</strong></div>
+                  <div><span>AY</span><strong id="debugAyValue">-</strong></div>
+                  <div><span>AZ</span><strong id="debugAzValue">-</strong></div>
+                </div>
+              </article>
+              <article class="debug-axis-card">
+                <span class="small-label">角速度三轴</span>
+                <div class="debug-axis-values">
+                  <div><span>GX</span><strong id="debugGxValue">-</strong></div>
+                  <div><span>GY</span><strong id="debugGyValue">-</strong></div>
+                  <div><span>GZ</span><strong id="debugGzValue">-</strong></div>
+                </div>
+              </article>
+            </div>
+
+            <div class="debug-grid">
+              <article class="chart-card">
+                <span class="small-label">弯曲电气信号（ADC / mV）</span>
+                <canvas id="flexRawChart"></canvas>
+              </article>
+              <article class="chart-card">
+                <span class="small-label">弯曲指数</span>
+                <canvas id="flexIndexChart"></canvas>
+              </article>
+              <article class="chart-card">
+                <span class="small-label">加速度三轴</span>
+                <canvas id="accelChart"></canvas>
+              </article>
+              <article class="chart-card">
+                <span class="small-label">角速度三轴</span>
+                <canvas id="gyroChart"></canvas>
+              </article>
+            </div>
+          </section>
+
+          <section class="panel">
+            <div class="panel-head">
+              <div>
+                <p class="eyebrow">Raw</p>
+                <h3>推理状态</h3>
+              </div>
+            </div>
+            <pre id="debugInferenceBox">等待推理状态...</pre>
+          </section>
+
+          <section class="panel">
+            <div class="panel-head">
+              <div>
+                <p class="eyebrow">Raw</p>
+                <h3>评估状态</h3>
+              </div>
+            </div>
+            <pre id="debugEvaluationBox">等待评估状态...</pre>
+          </section>
+
+          <section class="panel panel-wide">
+            <div class="panel-head">
+              <div>
+                <p class="eyebrow">Raw</p>
+                <h3>最新数据包</h3>
+              </div>
+            </div>
+            <pre id="debugPacketBox">等待实时数据...</pre>
+          </section>
+        </div>
+      </section>
+    </main>
+  </div>
+</body>
+</html>

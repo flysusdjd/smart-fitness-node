@@ -1,0 +1,54 @@
+# Local secrets
+.env
+.env.*
+!.env.example
+
+# IDE and editor files
+.vscode/
+.idea/
+*.iml
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# Arduino / ESP32 build outputs
+.arduino-build/
+.arduino-temp/
+
+# Android / Gradle build outputs
+.gradle/
+build/
+**/build/
+local.properties
+captures/
+.externalNativeBuild/
+.cxx/
+*.apk
+*.aab
+*.ap_
+*.dex
+
+# Browser preview/runtime profiles
+**/.edge-preview-profile/
+
+# Generated model backups; keep the current runtime model under ml_pipeline/data/models/
+ml_pipeline/data/model_backups/
+
+# Local packages and temporary files
+*.zip
+*.bundle
+*.tar
+*.tar.gz
+*.7z
+*.log
+*.tmp
+*.bak
+
+# Vendor reference package, not needed in the final source package
+【洛迦科技】350欧应变片-弯曲传感器模块-0517更新/

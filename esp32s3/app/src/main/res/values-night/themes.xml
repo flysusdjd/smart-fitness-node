@@ -1,0 +1,16 @@
+<resources xmlns:tools="http://schemas.android.com/tools">
+    <style name="Base.Theme.Esp32s3" parent="Theme.Material3.DayNight.NoActionBar">
+        <item name="colorPrimary">@color/sf_primary</item>
+        <item name="colorOnPrimary">@color/white</item>
+        <item name="colorSecondary">@color/sf_green</item>
+        <item name="colorOnSecondary">@color/white</item>
+        <item name="android:colorBackground">@color/sf_background</item>
+        <item name="colorSurface">@color/sf_surface</item>
+        <item name="android:statusBarColor">@color/sf_background</item>
+        <item name="android:navigationBarColor">@color/sf_background</item>
+        <item name="android:windowLightStatusBar" tools:targetApi="m">false</item>
+        <item name="android:windowLightNavigationBar" tools:targetApi="o_mr1">false</item>
+    </style>
+
+    <style name="Theme.Esp32s3" parent="Base.Theme.Esp32s3" />
+</resources>

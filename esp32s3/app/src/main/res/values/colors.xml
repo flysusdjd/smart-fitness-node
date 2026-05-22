@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="sf_primary">#E36E2F</color>
+    <color name="sf_primary_dark">#BC531C</color>
+    <color name="sf_primary_soft">#FFF1E6</color>
+    <color name="sf_green">#2F9D6A</color>
+    <color name="sf_green_soft">#EAF8F1</color>
+    <color name="sf_text">#241B14</color>
+    <color name="sf_muted">#7B6855</color>
+    <color name="sf_surface">#FFFDF9</color>
+    <color name="sf_background">#F7F2E9</color>
+    <color name="sf_line">#E8DACC</color>
+    <color name="sf_warning">#D2A129</color>
+    <color name="sf_danger">#D65A48</color>
+    <color name="black">#FF000000</color>
+    <color name="white">#FFFFFFFF</color>
+</resources>

@@ -1,0 +1,16 @@
+{
+  "sessionId": "20260430_020853_squat_wrong",
+  "label": "squat_wrong",
+  "subjectId": "flysusdjd",
+  "notes": "开发者标签采集",
+  "startedAtIso": "2026-04-30T02:08:53.634000+08:00",
+  "startedAtMs": 1777486133634,
+  "stoppedAtIso": "2026-04-30T02:09:05.243000+08:00",
+  "stoppedAtMs": 1777486145243,
+  "stopReason": "manual_stop",
+  "csvPath": "C:\\Users\\flysusdjd\\Documents\\New project 3\\ml_pipeline\\data\\raw\\squat_wrong\\20260430_020853_squat_wrong.csv",
+  "metaPath": "C:\\Users\\flysusdjd\\Documents\\New project 3\\ml_pipeline\\data\\raw\\squat_wrong\\20260430_020853_squat_wrong.json",
+  "deviceName": "ESP32S3_Fitness_BLE",
+  "deviceAddress": "AC:A7:04:14:65:09",
+  "rowsWritten": 115
+}

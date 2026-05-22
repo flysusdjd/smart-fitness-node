@@ -1,0 +1,22 @@
+{
+  "source_files": 35,
+  "labels": [
+    "bench_standard",
+    "idle",
+    "squat_standard"
+  ],
+  "selected_labels": [
+    "bench_standard",
+    "idle",
+    "squat_standard"
+  ],
+  "window_size": 20,
+  "step_size": 5,
+  "train_size": 0.7,
+  "val_size": 0.15,
+  "test_size": 0.15,
+  "windows_total": 864,
+  "train_windows": 565,
+  "val_windows": 121,
+  "test_windows": 178
+}

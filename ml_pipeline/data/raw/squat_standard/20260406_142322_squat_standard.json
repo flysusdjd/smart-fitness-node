@@ -1,0 +1,16 @@
+{
+  "sessionId": "20260406_142322_squat_standard",
+  "label": "squat_standard",
+  "subjectId": null,
+  "notes": null,
+  "startedAtIso": "2026-04-06T14:23:22.298000+08:00",
+  "startedAtMs": 1775456602298,
+  "stoppedAtIso": "2026-04-06T14:23:41.042000+08:00",
+  "stoppedAtMs": 1775456621042,
+  "stopReason": "manual_stop",
+  "csvPath": "C:\\Users\\flysusdjd\\Documents\\New project 3\\ml_pipeline\\data\\raw\\squat_standard\\20260406_142322_squat_standard.csv",
+  "metaPath": "C:\\Users\\flysusdjd\\Documents\\New project 3\\ml_pipeline\\data\\raw\\squat_standard\\20260406_142322_squat_standard.json",
+  "deviceName": "ESP32S3_Fitness_BLE",
+  "deviceAddress": "AC:A7:04:14:65:09",
+  "rowsWritten": 186
+}

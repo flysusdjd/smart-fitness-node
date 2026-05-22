@@ -1,0 +1,16 @@
+{
+  "sessionId": "20260429_233228_user_auto_training",
+  "label": "user_auto_training",
+  "subjectId": "flysusdjd",
+  "notes": "用户端自动识别训练",
+  "startedAtIso": "2026-04-29T23:32:28.215000+08:00",
+  "startedAtMs": 1777476748215,
+  "stoppedAtIso": "2026-04-29T23:32:46.456000+08:00",
+  "stoppedAtMs": 1777476766456,
+  "stopReason": "manual_stop",
+  "csvPath": "C:\\Users\\flysusdjd\\Documents\\New project 3\\ml_pipeline\\data\\raw\\user_auto_training\\20260429_233228_user_auto_training.csv",
+  "metaPath": "C:\\Users\\flysusdjd\\Documents\\New project 3\\ml_pipeline\\data\\raw\\user_auto_training\\20260429_233228_user_auto_training.json",
+  "deviceName": "ESP32S3_Fitness_BLE",
+  "deviceAddress": "AC:A7:04:14:65:09",
+  "rowsWritten": 175
+}
