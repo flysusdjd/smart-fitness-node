@@ -52,3 +52,21 @@ ml_pipeline/data/model_backups/
 
 # Vendor reference package, not needed in the final source package
 【洛迦科技】350欧应变片-弯曲传感器模块-0517更新/
+
+# Thesis deliverables, submission packages and local-only materials
+*.docx
+*.pptx
+*.pdf
+figures/
+/*.png
+/*.puml
+/*.py
+/*.md
+!/README.md
+/plantuml.jar
+/schema.sql
+/test_flow.json
+/.claude/
+/CLAUDE.md
+/林进宇_22207213_毕设源码/
+ml_pipeline/data/raw/user_auto_training/
