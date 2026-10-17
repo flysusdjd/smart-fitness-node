@@ -1,10 +1,13 @@
-﻿const ROUTES = ["/login", "/dashboard", "/training", "/history", "/debug"];
+// PC 网关前端单页应用入口：负责路由渲染、接口调用、WebSocket 实时数据和训练交互。
+﻿// 前端可访问的页面路由，后端会统一返回同一个 index.html。
+const ROUTES = ["/login", "/dashboard", "/training", "/history", "/debug"];
 const TOKEN_KEY = "smartFitnessAccessToken";
 const TOKEN_EXP_KEY = "smartFitnessAccessTokenExpiry";
 const SENSOR_HISTORY_LIMIT = 160;
 const USER_AUTO_LABEL = "user_auto_training";
 const NON_TRAINING_LABELS = new Set([USER_AUTO_LABEL]);
 
+// 模型内部标签到中文界面文案的映射。
 const LABEL_TEXT = {
   idle: "静止",
   squat_standard: "深蹲-标准",
@@ -14,6 +17,7 @@ const LABEL_TEXT = {
   user_auto_training: "自动识别训练",
 };
 
+// 把用户输入的中文动作名归一化到训练标签。
 const LABEL_ALIASES = {
   "静止": "idle",
   "站立": "idle",
@@ -45,6 +49,7 @@ const TRAINING_ACTION_TEXT = {
   user_auto_training: "自动识别训练",
 };
 
+// 不同动作的佩戴与采集提示，训练页会按实时识别结果切换。
 const TRAINING_GUIDES = {
   user_auto_training: "开始前请先确认 IMU 与柔性传感器固定牢靠。训练时系统会根据动作识别结果，自动切换深蹲或卧推的佩戴提示。",
   idle: "站立准备：保持自然站立 1 到 2 秒，IMU 与柔性传感器保持固定不晃动，用于建立本次训练的稳定基线。",
@@ -62,6 +67,7 @@ const ROUTE_SUBTITLE = {
   "/debug": "开发者工具与模型维护",
 };
 
+// 全局前端状态：缓存认证、设备、实时数据、训练任务和页面列表。
 const state = {
   auth: {
     token: localStorage.getItem(TOKEN_KEY),
@@ -93,12 +99,15 @@ const state = {
   repCounter: { count: 0, family: "idle", phases: [] },
 };
 
+// 常用 DOM 查询快捷函数。
 const $ = (id) => document.getElementById(id);
 
+// 读取当前浏览器路径，非法路径回退到登录页。
 function currentRoute() {
   return ROUTES.includes(window.location.pathname) ? window.location.pathname : "/login";
 }
 
+// 安全写入文本内容，目标元素不存在时静默跳过。
 function setText(id, value) {
   const el = $(id);
   if (el) el.textContent = value ?? "";
@@ -113,6 +122,7 @@ function safeArray(value) {
   return Array.isArray(value) ? value : [];
 }
 
+// 规范化动作标签并套用中文别名。
 function canonicalLabel(label) {
   const normalized = String(label || "").trim().toLowerCase().replace(/[\s-]+/g, "_").replace(/_+/g, "_").replace(/^_+|_+$/g, "");
   const compact = normalized.replaceAll("_", "");
@@ -146,6 +156,7 @@ function captureLabels() {
     .sort();
 }
 
+// 在标签列表变化后保留仍然可训练的勾选项。
 function syncSelectedLabels({ selectAllOnFirstLoad = false } = {}) {
   const validLabels = safeArray(state.labels);
   const validSet = new Set(validLabels);
@@ -189,6 +200,7 @@ function riskText(risk) {
   return "待评估";
 }
 
+// 把后端时间字符串格式化为中文本地时间。
 function formatDateTime(value) {
   if (!value) return "-";
   const d = new Date(value);
@@ -202,6 +214,7 @@ function formatMinutes(value) {
   return `${minutes >= 10 ? minutes.toFixed(0) : minutes.toFixed(1)} 分钟`;
 }
 
+// 根据训练时长和次数估算热量，用于首页展示。
 function estimateCalories(minutes, reps = 0) {
   return Math.max(0, Math.round(Number(minutes || 0) * 5.5 + Number(reps || 0) * 0.35));
 }
@@ -210,16 +223,21 @@ function isLoggedIn() {
   return Boolean(state.auth.token && state.auth.user);
 }
 
+// 通过 History API 切换页面并重新渲染。
 function navigate(route, replace = false) {
   const target = ROUTES.includes(route) ? route : "/login";
   window.history[replace ? "replaceState" : "pushState"]({}, "", target);
   renderAll();
 }
 
+// 认证头生成器：登录后把 token 放进 Authorization: Bearer 中。
+// 后端 /api/auth/me、/api/report/user-summary 等需要身份的接口会读取这个请求头。
 function authHeaders() {
   return state.auth.token ? { Authorization: `Bearer ${state.auth.token}` } : {};
 }
 
+// 网页端 HTTP 接口统一入口。
+// 所有 fetch 请求都走这里，统一补 Content-Type、认证头，并把后端 detail 错误转成可提示给用户的 Error。
 async function apiFetch(url, options = {}) {
   const response = await fetch(url, {
     ...options,
@@ -239,6 +257,7 @@ async function apiFetch(url, options = {}) {
   return payload;
 }
 
+// 登录成功后把令牌和过期时间持久化到 localStorage。
 function rememberToken(token, expiresAt) {
   state.auth.token = token || null;
   state.auth.tokenExpiry = expiresAt || null;
@@ -275,6 +294,7 @@ function packetSignature(packet) {
   return `${packet.seq ?? "na"}-${packet.timestampMs ?? "na"}`;
 }
 
+// 维护有限长度的实时传感器历史，用于曲线和阶段判断。
 function pushPacket(packet) {
   if (!packet) return;
   const signature = packetSignature(packet);
@@ -299,6 +319,7 @@ function getFlexSeries() {
   return state.sensorHistory.map((item) => Number(item.flexIndex || 0));
 }
 
+// 仅靠最近弯曲指数推断训练动作阶段。
 function deriveLivePhase(label) {
   const family = actionFamily(label);
   const values = getFlexSeries();
@@ -325,6 +346,7 @@ function resetRepCounter() {
   state.repCounter = { count: 0, family: "idle", phases: [] };
 }
 
+// 根据动作阶段序列估算完成次数。
 function updateRepCounter(label) {
   const family = actionFamily(label);
   const phase = deriveLivePhase(label);
@@ -347,6 +369,7 @@ function updateRepCounter(label) {
   }
 }
 
+// 基于后端评分字段生成网页单句提示；该函数只影响展示文案，不修改 EvaluationEngine 的评分结果。
 function buildSuggestion(label, evaluation) {
   const family = actionFamily(label);
   const depth = Number(evaluation?.depthScore || 0);
@@ -355,12 +378,14 @@ function buildSuggestion(label, evaluation) {
   const score = Number(evaluation?.standardScore || 0);
   if (family === "idle") return "保持自然站立和稳定佩戴，准备开始下一组训练。";
   if (label === "squat_wrong") {
+    // 错误深蹲标签优先显示轨迹纠正；稳定性、深度、节奏阈值只用于选择页面提示文案。
     if (stability < 78) return "检测到深蹲错误模式，优先纠正膝盖内扣，保持膝盖朝向脚尖。";
     if (depth < 70) return "错误深蹲同时存在幅度不足，先稳定下蹲幅度，再控制膝盖轨迹。";
     if (rhythm < 72) return "错误深蹲节奏偏急，放慢下蹲和起身速度，避免膝盖突然内扣。";
     return "当前被识别为深蹲错误，请重点检查膝盖轨迹和下肢稳定性。";
   }
   if (family === "squat") {
+    // 标准深蹲按深度、稳定性、节奏三个后端评分字段选择一个最优先的页面提示。
     if (depth < 70) return "下蹲深度不够，继续向后坐髋并保持稳定。";
     if (stability < 72) return "动作稳定性偏弱，注意核心收紧与膝盖方向。";
     if (rhythm < 72) return "节奏控制偏急，建议下蹲和起身都保持匀速。";
@@ -368,6 +393,7 @@ function buildSuggestion(label, evaluation) {
     return "继续保持膝盖与脚尖方向一致，注意动作完整度。";
   }
   if (family === "bench") {
+    // 卧推复用同一组评分字段，展示文案映射为下放幅度、动作路径和推起节奏。
     if (depth < 70) return "下放幅度偏小，建议保证完整下放行程。";
     if (stability < 72) return "动作路径有些不稳，注意肩部控制和发力轨迹。";
     if (rhythm < 72) return "推起和下放节奏不均匀，建议放慢速度。";
@@ -376,6 +402,7 @@ function buildSuggestion(label, evaluation) {
   }
   return "开始训练后，这里会显示当前动作的实时纠正建议。";
 }
+// 根据当前路由切换页面显示和导航高亮。
 function renderRoute() {
   const route = currentRoute();
   const pageMap = {
@@ -399,6 +426,7 @@ function renderRoute() {
   setText("topbarSubtitle", ROUTE_SUBTITLE[route]);
 }
 
+// 刷新顶部栏的设备状态、账号和页面副标题。
 function renderTopbar() {
   const connected = Boolean(state.status?.connected);
   const dot = $("statusDot");
@@ -410,6 +438,7 @@ function renderTopbar() {
   setText("topbarUserText", isLoggedIn() ? state.auth.user.username : "游客模式");
 }
 
+// 渲染登录/注册页和游客入口状态。
 function renderAuth() {
   setAuthMode(state.auth.mode);
   setText("authCurrentUser", state.auth.user?.username || "未登录");
@@ -423,6 +452,7 @@ function renderAuth() {
   );
 }
 
+// 渲染个人首页的训练概览、趋势、近期记录和建议。
 function renderDashboard() {
   const sessions = userSessions();
   const evaluations = userEvaluations();
@@ -519,6 +549,7 @@ function renderDashboard() {
   setText("guideBleText", state.status?.connected ? "设备已连接，可以开始训练" : "设备未连接");
 }
 
+// 渲染训练中心的连接、采集、实时评分和动作指导。
 function renderTraining() {
   const deviceSelect = $("deviceSelect");
   if (deviceSelect) {
@@ -608,6 +639,7 @@ function renderTraining() {
   if (stopBtn) stopBtn.disabled = !loggedIn || !recording;
   if (notesField) notesField.disabled = recording;
 }
+// 渲染历史报告页，展示采集记录和趋势摘要。
 function renderHistory() {
   if (!isLoggedIn()) {
     setText("historyProgressValue", "登录后可查看你的历史训练对比");
@@ -673,6 +705,7 @@ function renderHistory() {
   );
 }
 
+// 开发者视图：展示和删除本地采集记录。
 function renderDebugRecordings() {
   const host = $("debugRecordingsList");
   if (!host) return;
@@ -710,6 +743,7 @@ function renderDebugRecordings() {
   host.innerHTML = rows.map((item) => cardRenderer(item)).join("");
 }
 
+// 开发者视图：管理标签目录和样本数量。
 function renderDebugLabels() {
   const host = $("debugLabelList");
   if (!host) return;
@@ -750,6 +784,7 @@ function trainingPhaseText(phase) {
   return mapping[phase] || phase || "空闲";
 }
 
+// 渲染模型训练标签复选列表，并标记样本不足的标签。
 function renderLabelChecklist() {
   const host = $("debugTrainingLabels");
   if (!host) return;
@@ -783,6 +818,7 @@ function renderLabelChecklist() {
   setText("debugTrainingLabelCount", `${state.selectedLabels.length} / ${selectableCount}`);
 }
 
+// 按设备像素比初始化画布，保证曲线在高清屏上清晰。
 function setupCanvas(id) {
   const canvas = $(id);
   if (!canvas) return null;
@@ -796,6 +832,7 @@ function setupCanvas(id) {
   return { ctx, width, height };
 }
 
+// 绘制单条实时传感器曲线。
 function drawChart(id, series) {
   const setup = setupCanvas(id);
   if (!setup) return;
@@ -871,6 +908,7 @@ function drawAllCharts() {
   ]);
 }
 
+// 开发者视图：展示数据库、推理、评估和模型训练状态。
 function renderDebugSystemStatus() {
   const enabled = Boolean(state.dbStatus?.enabled);
   setText("debugDatabaseBadge", enabled ? "已启用" : "未启用");
@@ -934,6 +972,7 @@ function renderDebugTrainingPanel() {
   renderDebugRecordings();
 }
 
+// 开发者视图：展示最新数据包、三轴数据和曲线。
 function renderDebugLiveData() {
   const packet = state.latestPacket || {};
   setText("debugPacketBox", state.latestPacket ? JSON.stringify(state.latestPacket, null, 2) : "等待实时数据...");
@@ -959,6 +998,7 @@ function renderDebug() {
   renderDebugLiveData();
 }
 
+// 统一触发各页面渲染和图表刷新。
 function renderAll() {
   renderRoute();
   renderTopbar();
@@ -969,6 +1009,8 @@ function renderAll() {
   renderDebug();
 }
 
+// 有令牌时拉取当前用户，否则切回游客/未登录状态。
+// 这就是网页“记住登录”的核心流程：localStorage 保存 token，页面刷新后用 /api/auth/me 换回用户信息。
 async function loadCurrentUser() {
   if (!state.auth.token) {
     state.auth.user = null;
@@ -984,6 +1026,8 @@ async function loadCurrentUser() {
   }
 }
 
+// 页面初始化的一次性 HTTP 拉取。
+// HTTP 负责拿“当前完整快照”，WebSocket 后续只负责实时更新变化的状态/数据包/预测/评估结果。
 async function loadBaseData() {
   const tasks = [
     apiFetch("/api/status").then((payload) => {
@@ -1016,6 +1060,8 @@ async function loadBaseData() {
   await Promise.allSettled(tasks);
   renderAll();
 }
+// 建立实时 WebSocket，并根据后端事件更新前端状态。
+// 路径对应后端 api.py 的 @app.websocket("/ws/live")，用于持续接收 BLE 数据、模型预测和动作评估。
 function openSocket() {
   if (state.socket) {
     try { state.socket.close(); } catch { }
@@ -1029,6 +1075,7 @@ function openSocket() {
       const message = JSON.parse(event.data);
       const data = message.data;
       if (message.event === "status") {
+        // status：后端网关状态快照，例如设备连接状态、录制状态、最新包。
         state.status = data;
         if (data?.latestPacket) pushPacket(data.latestPacket);
         renderTopbar();
@@ -1039,12 +1086,15 @@ function openSocket() {
           renderDebugLiveData();
         }
       } else if (message.event === "packet") {
+        // packet：ESP32-S3 经 BLE Notify 推上来的单帧传感器数据。
+        // 普通用户页只用识别结果；调试模式才会可视化 ax/ay/az/gx/gy/gz/flex 等原始字段。
         pushPacket(data);
         const liveLabel = state.inference?.latestPrediction?.label || state.evaluation?.actionLabel || "idle";
         updateRepCounter(liveLabel);
         renderTraining();
         if (currentRoute() === "/debug") renderDebugLiveData();
       } else if (message.event === "prediction") {
+        // prediction：InferenceEngine 对滑窗数据输出的动作识别结果。
         state.inference = {
           ...(state.inference || {}),
           latestPrediction: data,
@@ -1064,10 +1114,12 @@ function openSocket() {
           renderDebugLiveData();
         }
       } else if (message.event === "evaluation_status") {
+        // evaluation_status：EvaluationEngine 输出的标准度评分、动作阶段和纠正建议。
         state.evaluation = data;
         renderTraining();
         if (currentRoute() === "/debug") renderDebugLiveData();
       } else if (message.event === "advanced_evaluation_status") {
+        // advanced_evaluation_status：服务端扩展评估模块的状态，用于后续更复杂动作质量分析。
         state.advanced = data;
         renderTraining();
       } else if (message.event === "report_summary") {
@@ -1075,6 +1127,7 @@ function openSocket() {
         renderDashboard();
         renderHistory();
       } else if (message.event === "model_training_status") {
+        // model_training_status：后台训练任务状态，用于调试模式显示训练进度和最近成功时间。
         state.trainingJob = data;
         if (currentRoute() === "/debug") renderDebugTrainingPanel();
       } else {
@@ -1090,6 +1143,8 @@ function openSocket() {
   });
 }
 
+// 注册接口流程：先 POST /api/auth/register 创建账号，再自动调用 /api/auth/login 登录。
+// 这样新用户注册后会直接进入个人首页，不需要再手动登录一次。
 async function registerUser() {
   const username = $("registerUsername")?.value.trim() || "";
   const password = $("registerPassword")?.value || "";
@@ -1108,6 +1163,7 @@ async function registerUser() {
   }
 }
 
+// 登录接口流程：POST /api/auth/login -> 保存 accessToken -> 拉取用户数据 -> 跳转个人首页。
 async function loginUser() {
   const username = $("loginIdentity")?.value.trim() || "";
   const password = $("loginPassword")?.value || "";
@@ -1129,6 +1185,8 @@ function logoutUser() {
   navigate("/login");
 }
 
+// 设备扫描接口：GET /api/devices/scan。
+// 浏览器不能直接访问 BLE 设备，所以网页通过 PC 网关间接调用 Bleak 扫描。
 async function scanDevices() {
   try {
     const payload = await apiFetch("/api/devices/scan");
@@ -1139,6 +1197,8 @@ async function scanDevices() {
   }
 }
 
+// 设备连接接口：POST /api/device/connect。
+// 连接成功后后端会订阅 BLE Notify，网页无需轮询硬件。
 async function connectDevice() {
   try {
     await apiFetch("/api/device/connect", {
@@ -1153,6 +1213,7 @@ async function connectDevice() {
 }
 
 async function disconnectDevice() {
+  // 设备断开接口：POST /api/device/disconnect，用于主动释放 BLE 连接。
   try {
     await apiFetch("/api/device/disconnect", { method: "POST" });
     state.status = await apiFetch("/api/status");
@@ -1162,6 +1223,8 @@ async function disconnectDevice() {
   }
 }
 
+// 开始采集/训练会话：POST /api/recordings/start。
+// 用户训练中心使用自动标签，开发者调试模式才传入具体训练标签。
 async function startRecording(label, notes) {
   if (!label) return window.alert("请先选择采集标签。");
   if (!state.status?.connected) return window.alert("请先连接设备，再开始训练或采集数据。");
@@ -1191,6 +1254,8 @@ async function startDeveloperCapture() {
 }
 
 async function stopRecording() {
+  // 结束采集/训练会话：POST /api/recordings/stop。
+  // 后端会关闭当前 SessionRecorder，并刷新本地记录和数据库记录。
   try {
     await apiFetch("/api/recordings/stop", { method: "POST" });
     await loadBaseData();
@@ -1200,6 +1265,8 @@ async function stopRecording() {
 }
 
 async function createLabel() {
+  // 新增标签接口：POST /api/labels。
+  // 只影响后续采集和训练可选项，不会自动产生训练样本。
   const rawLabel = $("debugNewLabelInput")?.value.trim() || "";
   const label = canonicalLabel(rawLabel);
   if (!label) return window.alert("请输入新的标签名。");
@@ -1217,6 +1284,8 @@ async function createLabel() {
 }
 
 async function deleteLabel(label) {
+  // 删除标签接口：DELETE /api/labels/{label}。
+  // 会删除该标签原始数据，但不会直接修改已经训练好的模型文件。
   if (!label) return;
   const count = Number(state.labelCounts?.[label] || 0);
   const confirmed = window.confirm(
@@ -1237,6 +1306,8 @@ async function deleteLabel(label) {
 }
 
 async function removeLabelFromModel(label) {
+  // 从模型移除标签接口：POST /api/models/remove-label。
+  // 本质是排除该标签后重新训练一个新模型，而不是直接编辑旧模型内部结构。
   if (!label) return;
   if (state.trainingJob?.running) return window.alert("模型正在训练中，请等待当前训练结束后再操作。");
 
@@ -1303,6 +1374,8 @@ async function resetModelTrainingStatus() {
   }
 }
 
+// 管理员训练模型接口：POST /api/models/train。
+// labels/window_size/step_size 会传给后端，再由后端调用 ml_pipeline 完成训练。
 async function startModelTraining() {
   syncSelectedLabels();
   if (!state.selectedLabels.length) return window.alert("请至少选择一个参与训练的标签。");
@@ -1323,6 +1396,8 @@ async function startModelTraining() {
 }
 
 async function reloadModel() {
+  // 重载模型接口：POST /api/inference/reload。
+  // 训练完成后需要让 InferenceEngine 重新读取磁盘上的最新 joblib 模型。
   try {
     await apiFetch("/api/inference/reload", { method: "POST" });
     await loadBaseData();
@@ -1333,6 +1408,8 @@ async function reloadModel() {
 }
 
 async function deleteRecording(sessionId) {
+  // 删除某次采集记录接口：DELETE /api/recordings/{session_id}。
+  // 用于清理误采集或空采集数据。
   if (!sessionId) return;
   const confirmed = window.confirm("确定删除这条训练记录吗？这会同时删除 CSV、JSON 和数据库里的对应记录。");
   if (!confirmed) return;
@@ -1345,6 +1422,7 @@ async function deleteRecording(sessionId) {
   }
 }
 
+// 集中绑定导航、认证、设备、采集、标签和模型训练按钮事件。
 function bindEvents() {
   document.querySelectorAll(".nav-link").forEach((link) => {
     link.addEventListener("click", (event) => {
@@ -1436,6 +1514,7 @@ function bindEvents() {
   });
 }
 
+// 页面加载后初始化渲染、绑定事件、拉取数据并连接实时通道。
 document.addEventListener("DOMContentLoaded", async () => {
   bindEvents();
   setAuthMode("register");

@@ -16,7 +16,7 @@ C:\Users\flysusdjd\Documents\New project 3\docs\technical_docs
 
 | 顺序 | 文档文件 | 主要内容 | 什么时候看 | 答辩/检查重点 |
 |---:|---|---|---|---|
-| 1 | `01_DOCUMENT_INDEX.md` | 当前总目录，说明 14 份技术文档的用途和阅读顺序 | 打开文档文件夹后先看 | 快速知道该看哪份文档 |
+| 1 | `01_DOCUMENT_INDEX.md` | 当前总目录，说明 17 份技术文档的用途和阅读顺序 | 打开文档文件夹后先看 | 快速知道该看哪份文档 |
 | 2 | `02_FINAL_CHECK_DEMO_SCRIPT.md` | 最终检查现场演示脚本，包含启动、登录、训练、报告、调试模式、手机端和异常补救 | 检查当天照着演示 | 回答“现场怎么展示项目”“如果设备/网页/手机出问题怎么补救” |
 | 3 | `03_TEACHER_QA_CHEATSHEET.md` | 老师高频追问速查表，包含短答、展开和注意事项 | 最后一天快速背 | 快速回答机器学习、硬件、BLE、数据库、前端、安卓、局限性等问题 |
 | 4 | `04_PROJECT_TECHNICAL_DEFENSE_GUIDE.md` | 项目总架构、设备端、PC 网关、网页端、安卓端、机器学习、数据库、技术栈、完成度、老师问答 | 最终检查前系统理解项目 | 回答“项目整体怎么实现”“设备端/服务端/网关怎么区分”“当前完成了哪些功能” |
@@ -30,6 +30,9 @@ C:\Users\flysusdjd\Documents\New project 3\docs\technical_docs
 | 12 | `12_MYSQL_BACKEND_SETUP.md` | MySQL 后端接入、环境变量、数据库初始化说明 | 数据库连接异常或重新配置电脑时看 | 回答“数据库怎么接入”“后端怎么连接 MySQL” |
 | 13 | `13_NAVICAT_MYSQL_SETUP.md` | Navicat 连接 MySQL、建库、查看表的操作说明 | 用 Navicat 查看数据库时看 | 回答“怎么可视化查看用户、会话、报告数据” |
 | 14 | `14_MIDTERM_FRAMEWORK_PLAN.md` | 中期检查时规划的系统功能框架和七点目标对应关系 | 回顾项目目标和阶段规划时看 | 回答“中期到最终补了哪些功能”“七个目标怎么拆解” |
+| 15 | `15_ANDROID_APP_CODE_GUIDE.md` | 安卓端 Java 代码详细说明，包括登录、主界面、BLE、语音、本地会话和页面切换 | 老师问手机端代码实现时看 | 回答“安卓页面怎么切换”“手机怎么连设备”“`setOnClickListener`、`Intent`、`SharedPreferences` 是什么” |
+| 16 | `16_ESP32_INO_CODE_GUIDE.md` | ESP32-S3 固件详细说明，包括 MPU6050、柔性传感器、BLE 服务、Notify、校准和平滑 | 老师问硬件固件代码时看 | 回答“ESP32 是怎么采集并发数据的”“为什么用 BLE Notify”“弯曲指数怎么计算” |
+| 17 | `17_CODE_TECHNICAL_DEEP_DIVE_AND_STRICT_QA.md` | 整个项目的代码难点深挖、技术原理、语法解释和严格答辩问答 | 最终检查前冲刺复习时看 | 回答“从代码角度讲整个项目”“老师细问某个函数、某种技术、某段链路时怎么答” |
 
 ---
 
@@ -45,7 +48,10 @@ C:\Users\flysusdjd\Documents\New project 3\docs\technical_docs
 8. 训练模型前看 `09_ML_PIPELINE_README.md`。
 9. 启动网关和脚本操作看 `10_PC_GATEWAY_README.md` 和 `11_TOOLS_README.md`。
 10. 数据库演示或排错看 `12_MYSQL_BACKEND_SETUP.md` 和 `13_NAVICAT_MYSQL_SETUP.md`。
-11. 最后有空再看 `14_MIDTERM_FRAMEWORK_PLAN.md`，用于讲项目从中期到最终版的扩展。
+11. 老师如果追问安卓端代码，补看 `15_ANDROID_APP_CODE_GUIDE.md`。
+12. 老师如果追问 ESP32 固件代码，补看 `16_ESP32_INO_CODE_GUIDE.md`。
+13. 最后冲刺时重点看 `17_CODE_TECHNICAL_DEEP_DIVE_AND_STRICT_QA.md`，它是专门应对严格代码追问的。
+14. 有空再回看 `14_MIDTERM_FRAMEWORK_PLAN.md`，用于讲项目从中期到最终版的扩展。
 
 ---
 
@@ -68,3 +74,6 @@ C:\Users\flysusdjd\Documents\New project 3\docs\technical_docs
 | Navicat 怎么连接？ | `13_NAVICAT_MYSQL_SETUP.md` |
 | 网关怎么启动？ | `10_PC_GATEWAY_README.md`、`11_TOOLS_README.md` |
 | 模型怎么训练？ | `09_ML_PIPELINE_README.md`、`11_TOOLS_README.md` |
+| 安卓 Java 代码怎么讲？ | `15_ANDROID_APP_CODE_GUIDE.md` |
+| ESP32 固件代码怎么讲？ | `16_ESP32_INO_CODE_GUIDE.md` |
+| 老师严格追问代码难点怎么办？ | `17_CODE_TECHNICAL_DEEP_DIVE_AND_STRICT_QA.md` |

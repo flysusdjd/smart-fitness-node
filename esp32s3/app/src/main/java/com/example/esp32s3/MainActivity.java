@@ -1,3 +1,4 @@
+// 安卓主训练页面：负责 BLE 扫描连接、实时数据显示、本地 CSV 采集和语音动作反馈。
 package com.example.esp32s3;
 
 import android.Manifest;
@@ -46,8 +47,10 @@ import java.util.List;
 import java.util.Locale;
 import java.util.UUID;
 
+// 主 Activity 同时管理 BLE 通讯、采集文件、页面状态和语音播报。
 public class MainActivity extends AppCompatActivity implements TextToSpeech.OnInitListener {
 
+    // 这些常量需要与 ESP32 固件和 PC 网关配置保持一致。
     private static final String DEVICE_NAME = "ESP32S3_Fitness_BLE";
     private static final UUID SERVICE_UUID = UUID.fromString("4fafc201-1fb5-459e-8fcc-c5c9c331914b");
     private static final UUID CHAR_UUID = UUID.fromString("beb5483e-36e1-4688-b7f5-ea07361b26a8");
@@ -61,6 +64,7 @@ public class MainActivity extends AppCompatActivity implements TextToSpeech.OnIn
     private static final String CSV_HEADER =
             "phoneReceiveTimeMs,label,seq,timestampMs,ax,ay,az,gx,gy,gz,flexRawAdc,flexRawMv,flexIndex,rawPacket";
 
+    // 页面控件引用分为账号、传感器、采集、评估、语音和导航几组。
     private TextView tvStatus;
     private TextView tvAccountMode;
     private TextView tvAccountUser;
@@ -102,6 +106,7 @@ public class MainActivity extends AppCompatActivity implements TextToSpeech.OnIn
     private View pageSettings;
     private View layoutDebugSection;
 
+    // BLE 扫描、连接和订阅状态。
     private BluetoothAdapter bluetoothAdapter;
     private BluetoothGatt currentGatt;
     private BluetoothLeScanner currentScanner;
@@ -109,6 +114,7 @@ public class MainActivity extends AppCompatActivity implements TextToSpeech.OnIn
 
     private final Handler mainHandler = new Handler(Looper.getMainLooper());
 
+    // 本地 CSV 采集文件状态。
     private BufferedWriter recordWriter;
     private File currentRecordFile;
     private boolean isRecording = false;
@@ -119,6 +125,7 @@ public class MainActivity extends AppCompatActivity implements TextToSpeech.OnIn
     private int recordCount = 0;
     private String currentLabel = "";
 
+    // 语音反馈状态，支持优先使用 Google TTS 后回退系统默认引擎。
     private TextToSpeech textToSpeech;
     private boolean ttsReady = false;
     private boolean ttsInitializing = false;
@@ -129,12 +136,14 @@ public class MainActivity extends AppCompatActivity implements TextToSpeech.OnIn
     private long lastSpokenAtMs = 0L;
     private String lastSpokenText = "";
 
+    // 实时动作评估使用上一帧时间和弯曲指数估算速度。
     private long previousPacketTimestampMs = -1L;
     private int previousFlexIndex = -1;
     private float smoothedFlexVelocity = 0f;
     private boolean debugMode = false;
     private SessionManager sessionManager;
 
+    // 扫描超时保护，避免 BLE 扫描一直占用资源。
     private final Runnable scanTimeoutRunnable = new Runnable() {
         @Override
         public void run() {
@@ -147,6 +156,7 @@ public class MainActivity extends AppCompatActivity implements TextToSpeech.OnIn
         }
     };
 
+    // 初始化页面、权限、BLE、TTS 和所有按钮事件。
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -232,6 +242,7 @@ public class MainActivity extends AppCompatActivity implements TextToSpeech.OnIn
         btnNavSettings.setOnClickListener(v -> showAppPage("settings"));
     }
 
+    // 页面销毁时释放采集文件、BLE 连接和 TTS 资源。
     @Override
     protected void onDestroy() {
         stopRecording(false);
@@ -245,6 +256,7 @@ public class MainActivity extends AppCompatActivity implements TextToSpeech.OnIn
         super.onDestroy();
     }
 
+    // 在单 Activity 内切换首页、训练、指南、报告和设置页面。
     private void showAppPage(String page) {
         setPageVisibility(pageHome, "home".equals(page));
         setPageVisibility(pageTraining, "training".equals(page));
@@ -289,6 +301,7 @@ public class MainActivity extends AppCompatActivity implements TextToSpeech.OnIn
         mainHandler.postDelayed(() -> finishTextToSpeechInit(status), TTS_INIT_SETTLE_MS);
     }
 
+    // 初始化语音引擎，优先选择中文支持更稳定的 Google TTS。
     private void initializeTextToSpeech() {
         triedSystemDefaultTts = false;
         String preferredEngine = isPackageInstalled(GOOGLE_TTS_PACKAGE) ? GOOGLE_TTS_PACKAGE : null;
@@ -351,6 +364,7 @@ public class MainActivity extends AppCompatActivity implements TextToSpeech.OnIn
         }
     }
 
+    // 按中文、系统默认语言顺序尝试配置 TTS。
     private boolean configureTextToSpeechLanguage() {
         if (textToSpeech == null) {
             return false;
@@ -388,6 +402,7 @@ public class MainActivity extends AppCompatActivity implements TextToSpeech.OnIn
         return true;
     }
 
+    // 按 Android 版本申请 BLE 和定位权限。
     private void requestPermissions() {
         List<String> permissions = new ArrayList<>();
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
@@ -412,6 +427,7 @@ public class MainActivity extends AppCompatActivity implements TextToSpeech.OnIn
         return ContextCompat.checkSelfPermission(this, permission) == PackageManager.PERMISSION_GRANTED;
     }
 
+    // 扫描指定名称的 ESP32 BLE 设备，找到后立即连接。
     private void startScan() {
         if (!hasPermission(Manifest.permission.BLUETOOTH_SCAN)) {
             tvStatus.setText(R.string.status_no_scan_permission);
@@ -468,6 +484,7 @@ public class MainActivity extends AppCompatActivity implements TextToSpeech.OnIn
         }
     }
 
+    // 停止扫描并清理回调，供超时、连接和退出流程复用。
     private void stopScanInternal() {
         mainHandler.removeCallbacks(scanTimeoutRunnable);
         if (currentScanner != null && currentScanCallback != null) {
@@ -485,6 +502,7 @@ public class MainActivity extends AppCompatActivity implements TextToSpeech.OnIn
         updateUiState();
     }
 
+    // 发起 GATT 连接，真正的服务发现和订阅在回调中完成。
     private void connectDevice(BluetoothDevice device) {
         if (!hasPermission(Manifest.permission.BLUETOOTH_CONNECT)) {
             tvStatus.setText(R.string.status_no_connect_permission);
@@ -500,6 +518,7 @@ public class MainActivity extends AppCompatActivity implements TextToSpeech.OnIn
         }
     }
 
+    // 主动断开时先停止采集，再关闭 BLE 连接。
     private void disconnectDevice() {
         stopScanInternal();
         if (isRecording) {
@@ -550,6 +569,7 @@ public class MainActivity extends AppCompatActivity implements TextToSpeech.OnIn
         updateUiState();
     }
 
+    // 创建本地 CSV 文件并写入表头，后续 BLE 数据会追加进去。
     private void startRecording() {
         if (!isSubscribed) {
             tvRecordStatus.setText(R.string.record_status_need_connection);
@@ -645,6 +665,7 @@ public class MainActivity extends AppCompatActivity implements TextToSpeech.OnIn
         updateUiState();
     }
 
+    // 把固件原始数据包和手机接收时间写成一行 CSV。
     private void appendRecordLine(String rawPacket) {
         if (!isRecording || recordWriter == null) {
             return;
@@ -684,6 +705,7 @@ public class MainActivity extends AppCompatActivity implements TextToSpeech.OnIn
         tvRawPacket.setText(R.string.waiting_for_data);
     }
 
+    // 重置实时评估缓存和页面评分显示。
     private void resetAssessmentState() {
         previousPacketTimestampMs = -1L;
         previousFlexIndex = -1;
@@ -726,6 +748,7 @@ public class MainActivity extends AppCompatActivity implements TextToSpeech.OnIn
         }
     }
 
+    // 切换语音反馈开关，开启时会播放测试语音。
     private void toggleVoiceFeedback() {
         if (voiceEnabled && ttsReady) {
             voiceEnabled = false;
@@ -777,6 +800,7 @@ public class MainActivity extends AppCompatActivity implements TextToSpeech.OnIn
         }
     }
 
+    // 按登录/游客状态刷新账号区域和按钮文案。
     private void updateAccountViews() {
         if (tvAccountMode == null || tvAccountUser == null || tvAccountBackend == null) {
             return;
@@ -845,6 +869,7 @@ public class MainActivity extends AppCompatActivity implements TextToSpeech.OnIn
         }
     }
 
+    // GATT 回调负责连接状态、MTU、服务发现、通知订阅和数据接收。
     private final BluetoothGattCallback gattCallback = new BluetoothGattCallback() {
         @Override
         public void onConnectionStateChange(BluetoothGatt gatt, int status, int newState) {
@@ -985,6 +1010,7 @@ public class MainActivity extends AppCompatActivity implements TextToSpeech.OnIn
         }
     };
 
+    // 解析固件 CSV 数据包，刷新 UI、写入采集文件并触发本地评估。
     private void updateData(byte[] value) {
         if (value == null) {
             return;
@@ -1033,7 +1059,7 @@ public class MainActivity extends AppCompatActivity implements TextToSpeech.OnIn
         }
     }
 
-    // 閹靛婧€缁旑垰鍘涢悽銊ㄤ氦闁插繗顫夐崚娆忎粵閸斻劋缍旂拠鍕強閿涘苯鎮楃紒顓炲讲閺囨寧宕叉稉鐑樻纯濮濓絽绱￠惃鍕伂娓氀勀侀崹瀣波閺嬫嚎鈧?
+    // 根据柔性传感器弯曲指数和陀螺仪幅值生成本地实时评分。
     private MotionAssessment buildMotionAssessment(
             long timestampMs,
             int ignoredAx,
@@ -1048,6 +1074,7 @@ public class MainActivity extends AppCompatActivity implements TextToSpeech.OnIn
         long deltaTimeMs = previousPacketTimestampMs > 0 ? Math.max(1L, timestampMs - previousPacketTimestampMs) : 100L;
         float deltaFlex = previousFlexIndex >= 0 ? (flexIndex - previousFlexIndex) : 0f;
         float velocityPerSecond = deltaFlex * 1000f / deltaTimeMs;
+        // 弯曲速度采用一阶指数平滑：历史估计占 65%，当前速度占 35%，降低单帧噪声对阶段判断的影响。
         smoothedFlexVelocity = previousFlexIndex < 0
                 ? velocityPerSecond
                 : (smoothedFlexVelocity * 0.65f + velocityPerSecond * 0.35f);
@@ -1055,6 +1082,7 @@ public class MainActivity extends AppCompatActivity implements TextToSpeech.OnIn
         previousPacketTimestampMs = timestampMs;
         previousFlexIndex = flexIndex;
 
+        // 静止状态需同时满足低弯曲幅度和低角速度，避免仅凭单一通道判断静止。
         boolean idle = flexIndex < 6 && gyroMag < 260;
         String actionLabel = idle ? getString(R.string.eval_action_idle) : getString(R.string.eval_action_squat);
 
@@ -1071,7 +1099,9 @@ public class MainActivity extends AppCompatActivity implements TextToSpeech.OnIn
             phase = getString(R.string.eval_phase_transition);
         }
 
+        // 深度分采用线性归一化：将 flexIndex 的 6-32 区间映射到 0-100。
         int depthScore = idle ? 88 : mapToScore(flexIndex, 6f, 32f);
+        // 稳定性从 100 分开始扣分：角速度项上限 55 分，弯曲速度项上限 20 分。
         int stabilityPenalty = clampToInt((gyroMag - 220.0) / 18.0, 0, 55)
                 + clampToInt(Math.abs(smoothedFlexVelocity) / 3.5f, 0, 20);
         int stabilityScore = clampToInt(100 - stabilityPenalty, 0, 100);
@@ -1081,6 +1111,7 @@ public class MainActivity extends AppCompatActivity implements TextToSpeech.OnIn
             rhythmScore = 92;
         } else {
             float absVelocity = Math.abs(smoothedFlexVelocity);
+            // 节奏分基于平滑弯曲速度区间：12-34 作为目标速度带，过快或过慢均降低分数。
             if (absVelocity >= 12f && absVelocity <= 34f) {
                 rhythmScore = 88;
             } else if (absVelocity > 34f) {
@@ -1092,6 +1123,7 @@ public class MainActivity extends AppCompatActivity implements TextToSpeech.OnIn
             }
         }
 
+        // 手机端本地标准度为启发式轻量评估：深度 45%、稳定性 35%、节奏 20%，用于直连 BLE 场景。
         int standardScore = idle
                 ? 88
                 : clampToInt(depthScore * 0.45 + stabilityScore * 0.35 + rhythmScore * 0.20, 0, 100);
@@ -1219,6 +1251,7 @@ public class MainActivity extends AppCompatActivity implements TextToSpeech.OnIn
         maybeSpeak(assessment);
     }
 
+    // 在冷却时间内抑制重复语音提示，避免训练时连续打断。
     private void maybeSpeak(MotionAssessment assessment) {
         if (!voiceEnabled || !ttsReady || textToSpeech == null || !assessment.shouldSpeak) {
             return;
@@ -1252,6 +1285,7 @@ public class MainActivity extends AppCompatActivity implements TextToSpeech.OnIn
         return Math.max(min, Math.min(max, (int) Math.round(value)));
     }
 
+    // 本地评估结果对象，用于同时驱动页面显示和语音播报。
     private static final class MotionAssessment {
         final String actionLabel;
         final String phase;

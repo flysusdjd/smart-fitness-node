@@ -1,3 +1,4 @@
+# 编译 ESP32-S3 Arduino 固件。
 param(
     [string]$SketchPath = (Join-Path (Split-Path -Parent $PSScriptRoot) 'ESPS3'),
     [string]$Fqbn = 'esp32:esp32:esp32s3',

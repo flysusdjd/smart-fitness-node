@@ -1,3 +1,5 @@
+"""数据库连接管理：按需创建 SQLAlchemy 引擎、会话工厂，并提供事务上下文。"""
+
 from __future__ import annotations
 
 from contextlib import contextmanager
@@ -10,18 +12,22 @@ from sqlalchemy.orm import Session, declarative_base, sessionmaker
 from . import config
 
 
+# 所有 ORM 模型共享同一个 Base，create_all 时会统一建表。
 Base = declarative_base()
 
 
+# 延迟初始化数据库连接，避免未启用 MySQL 时启动网关失败。
 class DatabaseManager:
     def __init__(self) -> None:
         self._engine: Engine | None = None
         self._session_factory: sessionmaker[Session] | None = None
 
+    # 根据配置判断数据库后端是否参与当前运行。
     @property
     def enabled(self) -> bool:
         return config.MYSQL_ENABLED
 
+    # 第一次访问数据库时创建引擎和会话工厂。
     def _ensure_engine(self) -> Engine:
         if not self.enabled:
             raise RuntimeError("MySQL backend is disabled. Set MYSQL_ENABLED=true to enable it.")
@@ -50,6 +56,7 @@ class DatabaseManager:
         return self._session_factory
 
     @contextmanager
+    # 提供带自动提交/回滚的事务上下文，业务层只关心读写逻辑。
     def session_scope(self) -> Iterator[Session]:
         session = self._ensure_session_factory()()
         try:
@@ -61,6 +68,7 @@ class DatabaseManager:
         finally:
             session.close()
 
+    # 导入模型后创建所有 ORM 表。
     def create_all(self) -> None:
         # Import here so model metadata is registered before create_all runs.
         from . import db_models  # noqa: F401
@@ -68,6 +76,7 @@ class DatabaseManager:
         engine = self._ensure_engine()
         Base.metadata.create_all(engine)
 
+    # 返回数据库启用状态和连通性，供前端设置页展示。
     def health(self) -> dict[str, object]:
         if not self.enabled:
             return {

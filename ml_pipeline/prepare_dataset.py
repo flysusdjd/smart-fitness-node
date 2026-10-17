@@ -1,3 +1,5 @@
+"""数据集预处理脚本：读取原始采集 CSV，按滑动窗口提取特征，并生成训练/验证/测试拆分。"""
+
 from __future__ import annotations
 
 import argparse
@@ -10,10 +12,12 @@ import pandas as pd
 from sklearn.model_selection import train_test_split
 
 
+# 传感器窗口中真正参与建模的原始字段。
 FEATURE_COLUMNS = ["ax", "ay", "az", "gx", "gy", "gz", "flexIndex"]
 REQUIRED_COLUMNS = ["label", "seq", "timestampMs", *FEATURE_COLUMNS]
 
 
+# 解析命令行参数，允许调整数据目录、滑窗长度和数据集比例。
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Prepare fitness action dataset.")
     parser.add_argument("--data-root", type=Path, default=Path(__file__).resolve().parent / "data")
@@ -26,6 +30,7 @@ def parse_args() -> argparse.Namespace:
     return parser.parse_args()
 
 
+# 确保原始数据、处理后特征、标签映射和拆分目录都已创建。
 def ensure_dirs(data_root: Path) -> dict[str, Path]:
     paths = {
         "raw": data_root / "raw",
@@ -39,6 +44,7 @@ def ensure_dirs(data_root: Path) -> dict[str, Path]:
     return paths
 
 
+# 按标签目录收集可用 CSV，支持只处理用户选择的动作标签。
 def load_csv_files(raw_root: Path, labels: set[str] | None = None) -> list[tuple[str, Path]]:
     files: list[tuple[str, Path]] = []
     for label_dir in sorted(raw_root.iterdir()):
@@ -51,12 +57,14 @@ def load_csv_files(raw_root: Path, labels: set[str] | None = None) -> list[tuple
     return files
 
 
+# 在进入特征工程前检查采集文件是否包含必需字段。
 def validate_columns(df: pd.DataFrame, csv_path: Path) -> None:
     missing = [column for column in REQUIRED_COLUMNS if column not in df.columns]
     if missing:
         raise ValueError(f"{csv_path} missing required columns: {missing}")
 
 
+# 把单个采集文件切成滑动窗口，并为每个窗口计算统计特征。
 def build_window_records(
     label: str,
     csv_path: Path,
@@ -101,6 +109,7 @@ def build_window_records(
     return records
 
 
+# 按源文件做训练/验证/测试拆分，避免同一段采集同时出现在多个集合中。
 def split_by_file(features_df: pd.DataFrame, args: argparse.Namespace) -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
     files_df = features_df[["source_file", "label"]].drop_duplicates().reset_index(drop=True)
 
@@ -130,6 +139,7 @@ def split_by_file(features_df: pd.DataFrame, args: argparse.Namespace) -> tuple[
     return train_df, val_df, test_df
 
 
+# 串起预处理全流程并把窗口、特征、标签映射和元数据写入磁盘。
 def main() -> None:
     args = parse_args()
     paths = ensure_dirs(args.data_root)

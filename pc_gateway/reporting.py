@@ -1,3 +1,5 @@
+"""报告汇总服务：聚合本地采集元数据和模型指标，生成首页/历史页所需的训练摘要。"""
+
 from __future__ import annotations
 
 import json
@@ -9,6 +11,7 @@ from typing import Any
 from . import config
 
 
+# 把本地会话、标签覆盖率和模型指标汇总成前端报告数据。
 class ReportService:
     """Aggregate local recording and model files into a midterm report summary."""
 
@@ -21,6 +24,7 @@ class ReportService:
         self._data_root = data_root or config.RAW_DATA_ROOT
         self._metrics_path = metrics_path or (config.MODELS_ROOT / "metrics.json")
 
+    # 生成首页/历史页使用的总体训练摘要。
     def build_summary(self, recent_limit: int = 5) -> dict[str, Any]:
         sessions = self._load_sessions()
         label_counter = Counter(session.get("label") or "unknown" for session in sessions)
@@ -50,6 +54,7 @@ class ReportService:
             "modelMetrics": model_metrics,
         }
 
+    # 扫描标签目录下的会话元数据，并按开始时间倒序排列。
     def _load_sessions(self) -> list[dict[str, Any]]:
         if not self._data_root.exists():
             return []
@@ -68,6 +73,7 @@ class ReportService:
         sessions.sort(key=lambda item: item.get("startedAtMs") or 0, reverse=True)
         return sessions
 
+    # 读取训练脚本输出的指标文件，缺失时返回友好的空状态。
     def _load_model_metrics(self) -> dict[str, Any]:
         if not self._metrics_path.exists():
             return {
@@ -117,6 +123,7 @@ class ReportService:
             for day, count in sorted(buckets.items())
         ][-7:]
 
+    # 根据标签覆盖和模型指标推断项目当前阶段。
     def _current_stage(self, covered_labels: list[str], model_metrics: dict[str, Any]) -> str:
         if {"idle", "squat_standard"}.issubset(set(covered_labels)) and not {"bench_standard", "bench_wrong", "squat_wrong"}.issubset(set(covered_labels)):
             return "二分类验证阶段"

@@ -2,6 +2,16 @@
 
 智能健身动作识别项目，包含 ESP32-S3 采集端、Android 客户端、PC BLE 网关、网页控制台、机器学习训练流水线和最终检查文档。
 
+## 界面预览
+
+PC 网页控制台：登录后查看训练概览、动作标准度评分、最近训练与纠正建议。
+
+![PC 网页控制台](docs/screenshots/web-dashboard.png)
+
+Android 客户端：与网页端共用同一账号和后端地址，负责 BLE 连接、实时数据与语音反馈。
+
+<img src="docs/screenshots/android-app.png" alt="Android 客户端" width="320">
+
 ## 项目结构
 
 ```text

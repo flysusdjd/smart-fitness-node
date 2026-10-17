@@ -1,3 +1,4 @@
+// 本地单元测试示例：用于验证基础测试环境。
 package com.example.esp32s3;
 
 import org.junit.Test;

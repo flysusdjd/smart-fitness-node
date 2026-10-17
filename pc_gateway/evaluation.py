@@ -1,3 +1,5 @@
+"""实时动作评估引擎：用规则和模型推理结果生成阶段、评分、风险、建议和语音提示。"""
+
 from __future__ import annotations
 
 import math
@@ -21,10 +23,12 @@ def _now_dict() -> dict[str, Any]:
     }
 
 
+# 把评分约束在指定范围内，避免异常传感器值导致 UI 溢出。
 def _clamp(value: float, minimum: float, maximum: float) -> float:
     return max(minimum, min(maximum, value))
 
 
+# 基于规则的实时动作质量评分器，作为最终服务端评估模型前的可演示版本。
 class EvaluationEngine:
     """Rule-based midterm scaffold for live action quality evaluation.
 
@@ -46,6 +50,7 @@ class EvaluationEngine:
         self._last_voice_text = None
         self._last_voice_ms = 0
 
+    # 融合模型标签和传感器窗口，计算动作阶段、标准度、风险和建议。
     def consume(
         self,
         packet: SensorPacket,
@@ -67,9 +72,12 @@ class EvaluationEngine:
         depth_score = self._depth_score(action_family, flex_values[-1] if flex_values else 0, max(flex_values, default=0))
         stability_score = self._stability_score(acc_magnitudes, gyro_magnitudes, flex_values)
         rhythm_score = self._rhythm_score(flex_values, gyro_magnitudes)
+        # 当前版本采用可解释的规则加权评分：深度 40%、稳定性 35%、节奏 25%。
+        # 这些权重是评估规则参数，不是模型训练得到的参数，后续可根据标注数据重新校准。
         standard_score = round(
             _clamp(depth_score * 0.4 + stability_score * 0.35 + rhythm_score * 0.25, 0, 100)
         )
+        # 当分类结果已落入错误动作标签时，对总分设置上限，保证类别判断与质量评分语义一致。
         if action_label == "squat_wrong":
             standard_score = min(standard_score, 62)
         elif action_label == "bench_wrong":
@@ -159,6 +167,7 @@ class EvaluationEngine:
         }
         return mapping.get(label, label)
 
+    # 根据弯曲变化和角速度推断当前动作阶段。
     def _detect_phase(
         self,
         action_family: str,
@@ -200,6 +209,7 @@ class EvaluationEngine:
         if action_family == "idle":
             return 100
 
+        # 深度分使用动作族对应的经验目标峰值归一化：深蹲目标 30，卧推目标 25。
         target_peak = 30 if action_family == "squat" else 25
         raw_score = (max(latest_flex, peak_flex) / max(1, target_peak)) * 100
         return round(_clamp(raw_score, 0, 100))
@@ -216,6 +226,7 @@ class EvaluationEngine:
         acc_delta = self._std_diff(acc_magnitudes)
         gyro_delta = self._std_diff(gyro_magnitudes)
         flex_delta = self._std_diff([float(value) for value in flex_values])
+        # 稳定性从 100 分开始扣分：加速度波动上限 55 分、角速度波动上限 30 分、弯曲波动上限 15 分。
         penalty = min(55.0, acc_delta / 120.0) + min(30.0, gyro_delta / 70.0) + min(15.0, flex_delta * 1.4)
         return round(_clamp(100.0 - penalty, 0.0, 100.0))
 
@@ -226,6 +237,7 @@ class EvaluationEngine:
         amplitude = max(flex_values) - min(flex_values)
         flex_delta = self._std_diff([float(value) for value in flex_values])
         gyro_delta = self._std_diff(gyro_magnitudes)
+        # 节奏分以 55 分为基准，幅度贡献最多增加 45 分；弯曲波动与角速度波动作为节奏不稳定惩罚。
         reward = min(45.0, amplitude * 1.5)
         penalty = min(35.0, flex_delta * 1.8) + min(20.0, gyro_delta / 140.0)
         return round(_clamp(55.0 + reward - penalty, 0.0, 100.0))
@@ -237,6 +249,7 @@ class EvaluationEngine:
         stability_score: int,
         rhythm_score: int,
     ) -> str:
+        # 风险等级为规则判定结果：先处理错误动作标签，再结合总分、稳定性和节奏阈值划分风险。
         if action_label.endswith("_wrong"):
             return "high" if stability_score < 72 or standard_score < 58 else "medium"
         if standard_score < 55 or stability_score < 50:
@@ -245,6 +258,7 @@ class EvaluationEngine:
             return "medium"
         return "low"
 
+    # 按动作类型和各项分数生成最多三条中文纠正建议。
     def _build_suggestions(
         self,
         *,
@@ -264,6 +278,7 @@ class EvaluationEngine:
         if action_family == "squat":
             if action_label == "squat_wrong":
                 suggestions.append("检测到深蹲错误模式，优先检查膝盖是否向内扣，保持膝盖朝向脚尖。")
+                # 错误深蹲标签优先给出轨迹纠正；稳定性、深度、节奏阈值用于补充最多三条建议。
                 if stability_score < 78:
                     suggestions.append("下蹲和起身时让髋、膝、脚尖保持同一方向，避免膝盖左右摆动。")
                 if depth_score < 70:
@@ -272,6 +287,7 @@ class EvaluationEngine:
                     suggestions.append("动作节奏偏急，建议放慢下蹲和起身速度。")
                 return suggestions[:3]
 
+            # 标准深蹲建议按深度、稳定性、节奏阈值生成；同一窗口最多保留三条建议。
             if depth_score < 70:
                 suggestions.append("下蹲深度还不够，可以继续向后坐臀并稳定下蹲。")
             if stability_score < 72:
@@ -282,6 +298,7 @@ class EvaluationEngine:
                 suggestions.append("已经接近蹲底，起身时注意保持髋膝同步发力。")
 
         elif action_family == "bench":
+            # 卧推动作复用幅度、稳定性、节奏三个评分维度，建议文案映射为上肢训练语义。
             if depth_score < 70:
                 suggestions.append("卧推动作幅度偏小，下放可以更充分一些。")
             if stability_score < 72:
@@ -298,6 +315,7 @@ class EvaluationEngine:
 
         return suggestions[:3]
 
+    # 对同一句提示加冷却时间，避免语音连续刷屏。
     def _build_voice_feedback(self, suggestions: list[str]) -> dict[str, Any]:
         cue = suggestions[0] if suggestions else "保持当前状态。"
         now_ms = int(time.time() * 1000)

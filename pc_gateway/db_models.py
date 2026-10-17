@@ -1,3 +1,5 @@
+"""数据库 ORM 模型：描述用户、设备、采集会话、模型版本、评估结果和训练报告表结构。"""
+
 from __future__ import annotations
 
 from datetime import date, datetime, timezone
@@ -8,10 +10,12 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 from .db import Base
 
 
+# 统一生成带时区的 UTC 时间，避免表字段时间来源不一致。
 def utcnow() -> datetime:
     return datetime.now(timezone.utc)
 
 
+# 常用创建/更新时间字段混入，减少每张表重复声明。
 class TimestampMixin:
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow, nullable=False)
     updated_at: Mapped[datetime] = mapped_column(
@@ -22,6 +26,7 @@ class TimestampMixin:
     )
 
 
+# 用户账号表，关联登录令牌和训练会话。
 class User(TimestampMixin, Base):
     __tablename__ = "users"
 
@@ -37,6 +42,7 @@ class User(TimestampMixin, Base):
     sessions: Mapped[list["SensorSession"]] = relationship(back_populates="user")
 
 
+# 登录令牌表，用于接口认证和过期控制。
 class UserToken(Base):
     __tablename__ = "user_tokens"
 
@@ -50,6 +56,7 @@ class UserToken(Base):
     user: Mapped[User] = relationship(back_populates="tokens")
 
 
+# BLE 设备表，记录设备地址、名称和在线状态。
 class Device(TimestampMixin, Base):
     __tablename__ = "devices"
 
@@ -65,6 +72,7 @@ class Device(TimestampMixin, Base):
     sessions: Mapped[list["SensorSession"]] = relationship(back_populates="device")
 
 
+# 一次传感器采集会话，关联本地 CSV/元数据、用户和设备。
 class SensorSession(TimestampMixin, Base):
     __tablename__ = "sensor_sessions"
 
@@ -89,6 +97,7 @@ class SensorSession(TimestampMixin, Base):
     evaluation: Mapped["EvaluationResult | None"] = relationship(back_populates="sensor_session", uselist=False)
 
 
+# 模型版本表，记录当前随机森林模型、标签和指标文件位置。
 class ModelVersion(TimestampMixin, Base):
     __tablename__ = "model_versions"
 
@@ -106,6 +115,7 @@ class ModelVersion(TimestampMixin, Base):
     is_active: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
 
 
+# 动作评估结果表，保存每次采集结束时的评分和纠正建议。
 class EvaluationResult(TimestampMixin, Base):
     __tablename__ = "evaluation_results"
 
@@ -130,6 +140,7 @@ class EvaluationResult(TimestampMixin, Base):
     sensor_session: Mapped[SensorSession | None] = relationship(back_populates="evaluation")
 
 
+# 训练报告快照表，用于沉淀阶段性汇总。
 class TrainingReport(TimestampMixin, Base):
     __tablename__ = "training_reports"
 

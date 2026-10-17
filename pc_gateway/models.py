@@ -1,3 +1,5 @@
+"""运行时数据模型：定义 BLE 数据包、设备信息、采集会话和网关状态的结构化表示。"""
+
 from __future__ import annotations
 
 from dataclasses import asdict, dataclass, field
@@ -6,10 +8,12 @@ from pathlib import Path
 from typing import Any
 
 
+# 固件发送的 CSV 数据包字段数，解析时用它校验协议是否一致。
 EXPECTED_FIELD_COUNT = 11
 
 
 @dataclass(slots=True)
+# 单条 BLE 传感器数据包，负责从固件 CSV 转成结构化字段。
 class SensorPacket:
     seq: int
     timestamp_ms: int
@@ -26,6 +30,7 @@ class SensorPacket:
     received_time_ms: int
     received_time_iso: str
 
+    # 解析固件上报的逗号分隔数据，同时记录 PC 端接收时间。
     @classmethod
     def from_payload(cls, payload: str, received_time_ms: int) -> "SensorPacket":
         parts = [part.strip() for part in payload.split(",")]
@@ -57,6 +62,7 @@ class SensorPacket:
             received_time_iso=received_iso,
         )
 
+    # 转换为前端 WebSocket 使用的驼峰命名字段。
     def to_event_dict(self) -> dict[str, Any]:
         return {
             "seq": self.seq,
@@ -75,6 +81,7 @@ class SensorPacket:
             "receivedTimeIso": self.received_time_iso,
         }
 
+    # 转换为本地训练 CSV 行，补充会话和标签信息。
     def to_csv_row(self, session_id: str, label: str) -> dict[str, Any]:
         return {
             "recordTimeIso": self.received_time_iso,
@@ -97,6 +104,7 @@ class SensorPacket:
 
 
 @dataclass(slots=True)
+# 扫描到的 BLE 设备信息，包含候选匹配原因。
 class DeviceInfo:
     name: str | None
     address: str
@@ -113,6 +121,7 @@ class DeviceInfo:
 
 
 @dataclass(slots=True)
+# 本地一次采集的文件路径、标签、设备和写入计数。
 class RecordingSession:
     session_id: str
     label: str
@@ -149,6 +158,7 @@ class RecordingSession:
 
 
 @dataclass(slots=True)
+# 网关整体状态快照，前端轮询和 WebSocket 都使用这个结构。
 class GatewayStatus:
     connected: bool = False
     recording: bool = False

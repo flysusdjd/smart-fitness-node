@@ -1,3 +1,5 @@
+"""PC 网关启动入口：选择可用端口、检查应用可导入性，并启动 Uvicorn 服务。"""
+
 from __future__ import annotations
 
 import importlib
@@ -15,6 +17,7 @@ DEFAULT_PORT = 8787
 PORT_SCAN_LIMIT = 10
 
 
+# 直接运行模块时把项目根目录加入导入路径。
 def _ensure_project_root_on_path() -> None:
     current_file = Path(__file__).resolve()
     project_root = current_file.parent.parent
@@ -33,6 +36,7 @@ def _is_port_available(host: str, port: int) -> bool:
     return True
 
 
+# 从首选端口开始扫描可用端口，避免启动时和旧进程冲突。
 def _choose_port(host: str, preferred_port: int, limit: int) -> int:
     for port in range(preferred_port, preferred_port + limit):
         if _is_port_available(host, port):
@@ -42,6 +46,7 @@ def _choose_port(host: str, preferred_port: int, limit: int) -> int:
     )
 
 
+# 探测局域网地址，方便手机访问 PC 网关。
 def _detect_lan_ip() -> str:
     try:
         with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as sock:
@@ -64,6 +69,7 @@ def _open_browser_later(url: str) -> None:
     timer.start()
 
 
+# 完成启动前检查、输出访问地址，并启动 Web 服务。
 def main() -> None:
     _ensure_project_root_on_path()
     port = _choose_port(DEFAULT_HOST, DEFAULT_PORT, PORT_SCAN_LIMIT)

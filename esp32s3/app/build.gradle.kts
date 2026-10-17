@@ -1,3 +1,4 @@
+// Android app 模块构建脚本：配置 SDK、依赖、命名空间和 Java 版本。
 plugins {
     alias(libs.plugins.android.application)
 }

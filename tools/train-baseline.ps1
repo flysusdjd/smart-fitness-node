@@ -1,3 +1,4 @@
+# 训练基线随机森林模型。
 $venvPython = 'C:\Users\flysusdjd\Documents\New project 3\ml_pipeline\.venv\Scripts\python.exe'
 $projectRoot = 'C:\Users\flysusdjd\Documents\New project 3'
 $scriptPath = 'C:\Users\flysusdjd\Documents\New project 3\ml_pipeline\train_baseline.py'

@@ -1,3 +1,4 @@
+// ESP32-S3 固件：采集 MPU6050 与柔性弯曲传感器数据，并通过 BLE Notify 发送给手机/PC。
 #include <Arduino.h>
 #include <Wire.h>
 #include <math.h>
@@ -7,6 +8,7 @@
 #include <BLEServer.h>
 #include <BLE2902.h>
 
+// MPU6050 实例负责读取三轴加速度和三轴角速度。
 MPU6050 mpu;
 
 static const char *DEVICE_NAME = "ESP32S3_Fitness_BLE";
@@ -65,6 +67,7 @@ static const float FLEX_INDEX_GAMMA = 1.40f;
 static const int FLEX_NEAR_RAIL_MV = 80;
 static const uint32_t FLEX_WARN_INTERVAL_MS = 3000;
 
+// BLE 和传感器的运行状态会在 loop 中持续更新。
 BLECharacteristic *pCharacteristic = nullptr;
 bool deviceConnected = false;
 uint32_t packetSequence = 0;
@@ -75,6 +78,7 @@ float flexBaselineMv = 0.0f;
 float smoothedFlexMv = 0.0f;
 uint32_t lastFlexWarnMs = 0;
 
+// BLE 连接回调：维护连接状态，断开后重新广播。
 class MyServerCallbacks : public BLEServerCallbacks {
 public:
     void onConnect(BLEServer *pServer) override {
@@ -90,6 +94,7 @@ public:
     }
 };
 
+// 以下三个函数根据当前基线动态计算柔性传感器阈值。
 int getCurrentBaselineMv() {
     return (int)(flexBaselineMv + 0.5f);
 }
@@ -105,6 +110,7 @@ int getFlexFullBendDeltaMv() {
 }
 
 // 读取应变片模块的 AO 输出，并对 9 个采样值排序后取中间 5 个均值。
+// 启动时扫描 I2C 总线，方便排查 MPU6050 接线问题。
 void scanI2cDevices() {
     Serial.println("[I2C] Scanning devices...");
     int found = 0;
@@ -120,6 +126,7 @@ void scanI2cDevices() {
     }
 }
 
+// 读取柔性传感器电压，并通过排序取中值附近样本降低噪声。
 int readFlexVoltageMv(int pin, int &rawAdc) {
     int samples[FLEX_ADC_SAMPLE_COUNT];
 
@@ -244,6 +251,7 @@ void warnIfFlexOutputNearRail(int rawMv) {
     Serial.println("[FLEX][WARN] Turn the board potentiometer slightly to reduce gain / move the zero point.");
 }
 
+// 初始化 BLE 服务、特征值和广播参数。
 void setupBle() {
     BLEDevice::init(DEVICE_NAME);
 
@@ -270,6 +278,7 @@ void setupBle() {
     Serial.println("[BLE] Service started");
 }
 
+// 初始化 I2C 与 MPU6050，失败时仍允许 BLE 启动。
 void setupMpu() {
     Wire.begin(SDA_PIN, SCL_PIN);
     scanI2cDevices();
@@ -287,6 +296,7 @@ void setupMpu() {
     mpuReady = true;
 }
 
+// 配置 ADC 输入并提示硬件供电安全要求。
 void setupFlexSensor() {
     analogReadResolution(12);
     pinMode(FLEX_SENSOR_PIN, INPUT);
@@ -312,6 +322,7 @@ void setup() {
     setupBle();
 }
 
+// 主循环按固定间隔读取传感器、计算弯曲指数并发送 CSV 数据包。
 void loop() {
     static uint32_t lastSendMs = 0;
 
@@ -337,6 +348,7 @@ void loop() {
     int rawVoltageMv = readFlexVoltageMv(FLEX_SENSOR_PIN, rawAdc);
 
     // 指数内部使用平滑后的电压，原始值仍然按真实采样值发送给手机和 CSV。
+    // 一阶指数平滑：当前采样按 alpha=0.20 融入历史值，用于抑制单次 ADC 抖动。
     smoothedFlexMv = smoothedFlexMv +
                      ((float)rawVoltageMv - smoothedFlexMv) * FLEX_SIGNAL_SMOOTH_ALPHA;
     int filteredVoltageMv = (int)(smoothedFlexMv + 0.5f);

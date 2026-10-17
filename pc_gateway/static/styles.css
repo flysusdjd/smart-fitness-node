@@ -1,3 +1,5 @@
+/* PC 网关前端样式：定义整体视觉主题、布局、训练页、报告页和开发者页的响应式界面。 */
+/* 主题变量：统一颜色、阴影和圆角。 */
 :root {
   --bg: #f8f1e6;
   --panel: rgba(255, 252, 247, 0.86);
@@ -30,7 +32,8 @@
 
 * { box-sizing: border-box; }
 
-html, body { min-height: 100%; }
+html, /* 全局页面底色、字体和背景氛围。 */
+body { min-height: 100%; }
 
 body {
   margin: 0;
@@ -103,6 +106,7 @@ textarea:focus {
   box-shadow: 0 0 0 4px rgba(228, 107, 45, 0.1);
 }
 
+/* 应用主容器和顶部导航。 */
 .app-shell {
   position: relative;
   z-index: 1;
@@ -276,6 +280,7 @@ html[data-route="/training"] #page-training,
 html[data-route="/history"] #page-history,
 html[data-route="/debug"] #page-debug { display: block; }
 
+/* 桌面端顶部栏布局适配。 */
 @media (min-width: 1121px) {
   .app-shell {
     display: grid;
@@ -397,6 +402,7 @@ html[data-route="/debug"] #page-debug { display: block; }
   to { opacity: 1; transform: translateY(0); }
 }
 
+/* 通用卡片、面板和页面标题样式。 */
 .hero-card,
 .panel,
 .dashboard-hero {
@@ -522,6 +528,7 @@ button {
   background: linear-gradient(135deg, var(--danger), #c24839);
 }
 
+/* 登录/注册首页布局。 */
 .login-layout {
   display: grid;
   grid-template-columns: 1.15fr .85fr;
@@ -677,6 +684,7 @@ button {
   font-size: 12px;
 }
 
+/* 个人首页仪表盘布局。 */
 .dashboard-layout {
   display: grid;
   grid-template-columns: minmax(0, 1fr) 310px;
@@ -984,6 +992,7 @@ button {
   transform: rotate(-12deg);
 }
 
+/* 首页、历史页和开发者页共享网格。 */
 .dashboard-grid,
 .history-grid,
 .debug-grid {
@@ -1668,6 +1677,7 @@ button {
   background: linear-gradient(90deg, var(--green), #96d783);
 }
 
+/* 训练指导、风险项和历史卡片组件。 */
 .guide-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -1714,6 +1724,7 @@ button {
   border: 1px solid var(--panel-border);
 }
 
+/* 训练中心实时连接、评分和指导区域。 */
 .training-grid {
   display: grid;
   grid-template-columns: 380px minmax(0, 1fr);
@@ -1921,6 +1932,7 @@ button {
   background: linear-gradient(135deg, #d75a49, #be3f2d);
 }
 
+/* 开发者记录管理和标签管理样式。 */
 .debug-record-card {
   align-items: center;
 }
@@ -2093,6 +2105,7 @@ button {
   gap: 18px;
 }
 
+/* 实时数据调试卡片和三轴数据展示。 */
 .debug-live-grid {
   display: grid;
   grid-template-columns: repeat(5, minmax(0, 1fr));

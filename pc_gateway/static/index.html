@@ -1,4 +1,5 @@
 <!DOCTYPE html>
+<!-- PC 网关前端页面结构：所有路由共享这一份单页应用骨架，由 app.js 控制显示内容。 -->
 <html lang="zh-CN">
 <head>
   <meta charset="UTF-8">
@@ -9,7 +10,8 @@
 </head>
 <body>
   <div class="app-shell">
-    <header class="topbar">
+        <!-- 顶部导航栏：显示品牌、路由入口、设备状态和当前账号。 -->
+<header class="topbar">
       <div class="brand-block">
         <div class="brand-mark">SF</div>
         <div>
@@ -42,7 +44,8 @@
     </header>
 
     <main class="route-shell">
-      <section class="route-page" id="page-login">
+            <!-- 登录页：负责注册、登录和游客进入。 -->
+<section class="route-page" id="page-login">
         <section class="hero-card login-layout">
           <div class="hero-panel">
             <p class="eyebrow">Welcome</p>
@@ -127,7 +130,8 @@
         </section>
       </section>
 
-      <section class="route-page hidden" id="page-dashboard">
+            <!-- 个人首页：展示训练概览、近期记录和模型/报告摘要。 -->
+<section class="route-page hidden" id="page-dashboard">
         <div class="dashboard-topline" aria-label="账户状态">
           <button class="icon-button" type="button" aria-label="消息提醒">⌁</button>
           <div class="dashboard-avatar" aria-hidden="true">SF</div>
@@ -361,7 +365,8 @@
         </div>
       </section>
 
-      <section class="route-page hidden" id="page-training">
+            <!-- 训练中心：连接设备、开始采集、显示实时动作评估。 -->
+<section class="route-page hidden" id="page-training">
         <section class="page-head">
           <div>
             <p class="eyebrow">Training</p>
@@ -551,7 +556,8 @@
         </div>
       </section>
 
-      <section class="route-page hidden" id="page-history">
+            <!-- 历史报告页：查看采集记录、趋势和报告快照。 -->
+<section class="route-page hidden" id="page-history">
         <section class="page-head">
           <div>
             <p class="eyebrow">History</p>
@@ -606,7 +612,8 @@
         </div>
       </section>
 
-      <section class="route-page hidden" id="page-debug">
+            <!-- 开发者页：管理数据库、标签、模型训练和原始数据。 -->
+<section class="route-page hidden" id="page-debug">
         <section class="page-head">
           <div>
             <p class="eyebrow">Settings</p>

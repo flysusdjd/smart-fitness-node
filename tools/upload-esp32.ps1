@@ -1,3 +1,4 @@
+# 编译并上传 ESP32-S3 固件到开发板。
 param(
     [Parameter(Mandatory = $true)]
     [string]$Port,

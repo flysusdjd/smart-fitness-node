@@ -1,3 +1,4 @@
+// 设备端仪器测试示例：用于验证 Android 应用上下文。
 package com.example.esp32s3;
 
 import android.content.Context;

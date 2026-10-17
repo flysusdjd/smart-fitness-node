@@ -1,4 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!-- 应用颜色资源：统一训练端的品牌色和状态色。 -->
 <resources>
     <color name="sf_primary">#E36E2F</color>
     <color name="sf_primary_dark">#BC531C</color>

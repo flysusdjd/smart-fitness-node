@@ -1,3 +1,4 @@
+# 调用数据预处理脚本生成训练集、验证集和测试集。
 param(
     [int]$WindowSize = 20,
     [int]$StepSize = 5

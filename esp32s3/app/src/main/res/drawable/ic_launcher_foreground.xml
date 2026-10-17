@@ -1,3 +1,4 @@
+<!-- Drawable 资源：ic_launcher_foreground 的背景/形状定义。 -->
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:aapt="http://schemas.android.com/aapt"
     android:width="108dp"

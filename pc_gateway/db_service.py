@@ -1,3 +1,5 @@
+"""数据库业务服务：封装用户认证、设备状态、采集记录、评估结果、模型版本和报告快照的读写逻辑。"""
+
 from __future__ import annotations
 
 import json

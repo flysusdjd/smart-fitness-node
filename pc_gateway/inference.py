@@ -1,3 +1,5 @@
+"""实时动作识别引擎：维护传感器滑动窗口，提取统计特征，并调用已训练模型预测动作标签。"""
+
 from __future__ import annotations
 
 import json
@@ -15,10 +17,12 @@ from . import config
 from .models import SensorPacket
 
 
+# 实时推理和离线训练共用的原始传感器字段。
 FEATURE_COLUMNS = ["ax", "ay", "az", "gx", "gy", "gz", "flexIndex"]
 FEATURE_STATS = ("mean", "std", "min", "max", "ptp", "rms")
 
 
+# 生成毫秒时间戳和本地 ISO 时间，便于前端显示。
 def _now_dict() -> dict[str, Any]:
     now_ms = int(time.time() * 1000)
     now_iso = datetime.fromtimestamp(
@@ -31,6 +35,7 @@ def _now_dict() -> dict[str, Any]:
     }
 
 
+# 维护滑动窗口并调用已训练模型生成动作识别结果。
 class InferenceEngine:
     def __init__(
         self,
@@ -54,14 +59,17 @@ class InferenceEngine:
         self._loaded_at_iso: str | None = None
         self.load_model(silent=True)
 
+    # 当前窗口长度来自模型元数据，保证实时推理和训练一致。
     @property
     def window_size(self) -> int:
         return self._window_size
 
+    # 连接切换或模型重载时清空旧数据，避免跨会话污染预测。
     def clear_buffer(self) -> None:
         self._buffer = deque(maxlen=self._window_size)
         self._latest_prediction = None
 
+    # 加载 joblib 模型、标签映射和数据集元信息。
     def load_model(self, *, silent: bool = False) -> dict[str, Any]:
         self._model = None
         self._feature_columns = self._default_feature_columns()
@@ -110,6 +118,7 @@ class InferenceEngine:
 
         return self.status_dict()
 
+    # 接收一帧传感器数据，窗口满后提取特征并输出预测。
     def consume_packet(self, packet: SensorPacket) -> dict[str, Any] | None:
         self._buffer.append(packet)
         if self._model is None or len(self._buffer) < self._window_size:
@@ -184,6 +193,7 @@ class InferenceEngine:
         self._window_size = max(1, window_size)
         self._buffer = deque(maxlen=self._window_size)
 
+    # 把窗口内每个信号转成均值、标准差、峰峰值、RMS 等统计量。
     def _build_feature_row(self, packets: list[SensorPacket]) -> dict[str, float]:
         frame = pd.DataFrame(
             [
@@ -211,6 +221,7 @@ class InferenceEngine:
             feature_row[f"{feature_name}_rms"] = float(np.sqrt(np.mean(np.square(signal))))
         return feature_row
 
+    # 如果模型支持概率输出，则返回置信度最高的若干标签。
     def _predict_top_labels(self, input_df: pd.DataFrame, predicted_label_id: int) -> list[dict[str, Any]]:
         if hasattr(self._model, "predict_proba"):
             probabilities = self._model.predict_proba(input_df)[0]

@@ -1,3 +1,5 @@
+"""高级动作评估服务：基于实时窗口和可选阈值配置，输出更细的代偿风险与纠正重点。"""
+
 from __future__ import annotations
 
 import json
@@ -22,6 +24,7 @@ def _clamp(value: float, minimum: float, maximum: float) -> float:
     return max(minimum, min(maximum, value))
 
 
+# 服务端高级评估框架，后续可用真实姿态模型替换当前规则。
 class AdvancedEvaluationService:
     """Service-side evaluation scaffold for future complex assessment models.
 
@@ -45,6 +48,7 @@ class AdvancedEvaluationService:
     def status_dict(self) -> dict[str, Any]:
         return self._latest
 
+    # 接收当前窗口和基础评估分数，生成代偿标记、姿态摘要和纠正重点。
     def consume(
         self,
         packet: SensorPacket,
@@ -107,6 +111,7 @@ class AdvancedEvaluationService:
         }
         return self._latest
 
+    # 优先读取外部阈值配置，缺失或解析失败时回退到默认规则。
     def _load_profile(self) -> dict[str, Any]:
         if self._profile_path.exists():
             try:
@@ -122,6 +127,7 @@ class AdvancedEvaluationService:
         return {
             "loaded": False,
             "version": "default-v1",
+            # 高级评估默认阈值；当前仅用于规则化风险标记，后续可由配置文件或服务端评估模型替换。
             "thresholds": {
                 "squat_depth_good": 70,
                 "stability_good": 75,
@@ -176,6 +182,7 @@ class AdvancedEvaluationService:
             return "watch"
         return "risk"
 
+    # 根据标签、幅度、稳定性、节奏和角速度生成代偿风险标记。
     def _compensation_flags(
         self,
         *,
@@ -200,6 +207,7 @@ class AdvancedEvaluationService:
                 "detail": "模型识别到深蹲错误样本，优先检查膝盖是否偏离脚尖方向。",
             })
 
+        # 代偿标记采用阈值规则：深度、稳定性、节奏低于 profile 阈值时输出对应风险项。
         if action_family == "squat" and depth_score < int(thresholds.get("squat_depth_good", 70)):
             flags.append({
                 "code": "depth_insufficient",

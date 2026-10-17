@@ -1,3 +1,5 @@
+"""本地采集写入器：把 BLE 实时数据落盘为 CSV，并同步保存会话元数据。"""
+
 from __future__ import annotations
 
 import csv
@@ -11,6 +13,7 @@ from typing import TextIO
 from .models import RecordingSession, SensorPacket
 
 
+# 训练 CSV 的固定列顺序，与模型预处理脚本保持一致。
 CSV_FIELDNAMES = [
     "recordTimeIso",
     "recordTimeMs",
@@ -31,11 +34,13 @@ CSV_FIELDNAMES = [
 ]
 
 
+# 把用户输入的标签转成安全文件名，避免非法路径字符。
 def sanitize_for_filename(value: str) -> str:
     sanitized = re.sub(r"[^A-Za-z0-9_-]+", "_", value.strip())
     return sanitized.strip("_") or "session"
 
 
+# 管理当前采集会话的 CSV 文件句柄和元数据写入。
 class SessionRecorder:
     def __init__(self, data_root: Path) -> None:
         self._data_root = data_root
@@ -44,6 +49,7 @@ class SessionRecorder:
         self._csv_handle: TextIO | None = None
         self._csv_writer: csv.DictWriter[str] | None = None
 
+    # 暴露当前会话，供服务层同步状态和数据库。
     @property
     def active_session(self) -> RecordingSession | None:
         return self._active_session
@@ -52,6 +58,7 @@ class SessionRecorder:
     def is_recording(self) -> bool:
         return self._active_session is not None
 
+    # 创建标签目录、打开 CSV、写表头，并生成会话元数据。
     def start(
         self,
         *,
@@ -102,6 +109,7 @@ class SessionRecorder:
         self._write_metadata()
         return session
 
+    # 把实时传感器数据追加到当前 CSV，并立即刷新到磁盘。
     def write_packet(self, packet: SensorPacket) -> None:
         if self._active_session is None or self._csv_writer is None:
             return
@@ -115,6 +123,7 @@ class SessionRecorder:
             self._csv_handle.flush()
         self._active_session.rows_written += 1
 
+    # 关闭 CSV 句柄、补齐停止时间和原因，并返回完成的会话对象。
     def stop(self, reason: str) -> RecordingSession | None:
         if self._active_session is None:
             return None
@@ -140,6 +149,7 @@ class SessionRecorder:
         self._active_session = None
         return finished
 
+    # 把会话摘要写成 JSON，便于历史记录和报告汇总读取。
     def _write_metadata(self) -> None:
         if self._active_session is None:
             return

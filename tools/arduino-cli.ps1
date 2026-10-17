@@ -1,3 +1,4 @@
+# 查找并调用 arduino-cli，供其他 ESP32 工具脚本复用。
 param(
     [Parameter(ValueFromRemainingArguments = $true)]
     [string[]]$CliArgs

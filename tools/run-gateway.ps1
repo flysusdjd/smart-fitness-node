@@ -1,3 +1,4 @@
+# 启动 PC 网关 Web 服务。
 $venvPython = 'C:\Users\flysusdjd\Documents\New project 3\ml_pipeline\.venv\Scripts\python.exe'
 $scriptPath = 'C:\Users\flysusdjd\Documents\New project 3\pc_gateway\main.py'
 

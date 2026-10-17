@@ -1,3 +1,5 @@
+"""认证安全工具：负责密码哈希校验、访问令牌生成和过期时间计算。"""
+
 from __future__ import annotations
 
 import base64
@@ -14,6 +16,7 @@ def _now() -> datetime:
     return datetime.now(timezone.utc)
 
 
+# 使用 PBKDF2-HMAC-SHA256 加盐保存密码，不存明文。
 def hash_password(password: str, iterations: int = 200_000) -> str:
     salt = os.urandom(16)
     digest = hashlib.pbkdf2_hmac("sha256", password.encode("utf-8"), salt, iterations)
@@ -24,6 +27,7 @@ def hash_password(password: str, iterations: int = 200_000) -> str:
     )
 
 
+# 用常量时间比较校验密码，减少时序攻击风险。
 def verify_password(password: str, stored_hash: str) -> bool:
     algorithm, iterations, salt_b64, digest_b64 = stored_hash.split("$", 3)
     if algorithm != "pbkdf2_sha256":
@@ -34,6 +38,7 @@ def verify_password(password: str, stored_hash: str) -> bool:
     return hmac.compare_digest(candidate, expected)
 
 
+# 生成 URL 安全的随机访问令牌。
 def generate_access_token() -> str:
     return secrets.token_urlsafe(32)
 

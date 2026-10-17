@@ -1,3 +1,5 @@
+"""基线模型训练脚本：加载预处理特征，训练随机森林分类器，并保存模型与评估指标。"""
+
 from __future__ import annotations
 
 import argparse
@@ -10,6 +12,7 @@ from sklearn.ensemble import RandomForestClassifier
 from sklearn.metrics import accuracy_score, classification_report, confusion_matrix
 
 
+# 这些列用于追踪样本来源，不作为模型输入特征。
 NON_FEATURE_COLUMNS = {
     "label",
     "label_id",
@@ -25,6 +28,7 @@ NON_FEATURE_COLUMNS = {
 }
 
 
+# 解析训练参数，目前主要控制随机森林并行数。
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Train the baseline fitness classifier.")
     parser.add_argument(
@@ -36,16 +40,19 @@ def parse_args() -> argparse.Namespace:
     return parser.parse_args()
 
 
+# 读取某个数据集拆分文件，不存在时提前报错。
 def load_split(csv_path: Path) -> pd.DataFrame:
     if not csv_path.exists():
         raise FileNotFoundError(f"Split file not found: {csv_path}")
     return pd.read_csv(csv_path)
 
 
+# 从表格列中筛出真正进入模型训练的特征列。
 def select_feature_columns(df: pd.DataFrame) -> list[str]:
     return [column for column in df.columns if column not in NON_FEATURE_COLUMNS]
 
 
+# 加载拆分数据、训练随机森林、评估模型并保存可被网关加载的 joblib 文件。
 def main() -> None:
     args = parse_args()
     pipeline_root = Path(__file__).resolve().parent
@@ -85,6 +92,7 @@ def main() -> None:
         min_samples_leaf=1,
         random_state=42,
         n_jobs=args.n_jobs,
+        # 训练阶段按类别频次自动调整样本权重，降低类别样本不均衡对分类边界的影响。
         class_weight="balanced",
     )
     model.fit(x_train, y_train)

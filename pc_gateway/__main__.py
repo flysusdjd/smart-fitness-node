@@ -1,3 +1,5 @@
+"""PC 网关模块启动入口：转发到 main.main，支持 python -m pc_gateway 启动。"""
+
 from __future__ import annotations
 
 import sys

@@ -1,3 +1,4 @@
+// Gradle 设置脚本：声明插件仓库、依赖仓库和 app 模块。
 pluginManagement {
     repositories {
         google {

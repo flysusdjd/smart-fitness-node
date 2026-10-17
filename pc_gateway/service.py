@@ -1,4 +1,6 @@
-﻿from __future__ import annotations
+"""PC 网关核心服务：协调 BLE 连接、采集落盘、实时推理评估、模型训练和前端事件推送。"""
+
+from __future__ import annotations
 
 import asyncio
 from asyncio.subprocess import PIPE
@@ -22,7 +24,9 @@ from .recorder import SessionRecorder
 from .reporting import ReportService
 
 
+# 这些标签用于体验/自动记录，不参与模型训练类别。
 NON_MODEL_LABELS = {"user_auto_training"}
+# 中文输入和常见别名统一映射到模型内部标签，减少误建新目录。
 LABEL_ALIASES = {
     "静止": "idle",
     "站立": "idle",
@@ -46,6 +50,7 @@ LABEL_ALIASES = {
 }
 
 
+# 网关核心服务：协调 BLE、采集、推理、评估、模型训练、数据库和 WebSocket 推送。
 class GatewayService:
     def __init__(self, data_root: Path | None = None) -> None:
         self._data_root = data_root or config.RAW_DATA_ROOT
@@ -86,14 +91,17 @@ class GatewayService:
         }
         self._database.safe_sync_current_model_version()
 
+    # 应用关闭时停止采集并释放 BLE 连接。
     async def close(self) -> None:
         await self.stop_recording("service_shutdown")
         await self.disconnect()
 
+    # 扫描附近 BLE 设备并返回排序后的候选列表。
     async def scan_devices(self, timeout_s: float = config.DEFAULT_SCAN_TIMEOUT_S) -> list[dict[str, Any]]:
         devices = await self._discover_devices(timeout_s)
         return [device["info"].to_dict() for device in devices]
 
+    # 连接目标 ESP32 设备，订阅通知并重置实时推理/评估状态。
     async def connect(
         self,
         *,
@@ -108,6 +116,8 @@ class GatewayService:
             target = await self._find_device(address=address, device_name=device_name, timeout_s=timeout_s)
             client = BleakClient(target["device"], disconnected_callback=self._on_ble_disconnect)
             await client.connect()
+            # BLE 数据入口：订阅 ESP32-S3 固件暴露的 Characteristic Notify。
+            # 设备每发一包传感器字符串，Bleak 就会回调 _notification_handler。
             await client.start_notify(config.CHARACTERISTIC_UUID, self._notification_handler)
 
             self._client = client
@@ -130,6 +140,7 @@ class GatewayService:
         await self._broadcast("advanced_evaluation_status", self._status.advanced_evaluation)
         return self.get_status()
 
+    # 主动断开设备连接，同时停止采集并通知前端刷新状态。
     async def disconnect(self) -> dict[str, Any]:
         async with self._lock:
             client = self._client
@@ -157,6 +168,7 @@ class GatewayService:
         await self._broadcast("advanced_evaluation_status", self._status.advanced_evaluation)
         return self.get_status()
 
+    # 开始本地 CSV 采集，并尽量同步一条数据库会话记录。
     async def start_recording(
         self,
         *,
@@ -185,6 +197,7 @@ class GatewayService:
         await self._broadcast("status", self.get_status())
         return session.to_dict()
 
+    # 结束采集后写入数据库评估结果和报告快照。
     async def stop_recording(self, reason: str = "manual_stop") -> dict[str, Any] | None:
         session = self._recorder.stop(reason)
         self._status.recording = False
@@ -216,6 +229,7 @@ class GatewayService:
         self._status.database = self._database.status()
         return self._status.to_dict()
 
+    # 统计本地标签目录和样本数量，并补齐推荐标签。
     def get_labels(self) -> dict[str, Any]:
         available = []
         if self._data_root.exists():
@@ -250,6 +264,7 @@ class GatewayService:
             "labels": self.get_labels(),
         }
 
+    # 删除标签目录前检查正在采集/训练状态，并同步清理数据库记录。
     async def delete_label(self, raw_label: str) -> dict[str, Any]:
         label = self._normalize_label_name(raw_label)
         if self._recorder.active_session is not None and self._recorder.active_session.label == label:
@@ -437,6 +452,7 @@ class GatewayService:
         await self._broadcast("status", self.get_status())
         return self._status.inference
 
+    # 提交模型训练任务前校验标签数量和样本覆盖。
     async def start_model_training(
         self,
         *,
@@ -480,6 +496,7 @@ class GatewayService:
         )
         return self.get_model_training_status()
 
+    # 通过重新训练剩余类别来移除某个模型标签。
     async def remove_label_from_model(
         self,
         *,
@@ -512,9 +529,12 @@ class GatewayService:
             auto_reload=auto_reload,
         )
 
+    # WebSocket 订阅入口：api.py 的 /ws/live 会为每个浏览器页面调用一次。
+    # 返回值是一个 asyncio.Queue，相当于给这个浏览器单独开一个“消息收件箱”。
     async def subscribe(self) -> asyncio.Queue[dict[str, Any]]:
         queue: asyncio.Queue[dict[str, Any]] = asyncio.Queue(maxsize=100)
         self._subscribers.add(queue)
+        # 新连接的页面先收到完整初始状态，避免只能等下一帧设备数据才有画面。
         await queue.put({"event": "status", "data": self.get_status()})
         await queue.put({"event": "report_summary", "data": self.get_report_summary()})
         await queue.put({"event": "advanced_evaluation_status", "data": self.get_advanced_evaluation_status()})
@@ -522,8 +542,10 @@ class GatewayService:
         return queue
 
     async def unsubscribe(self, queue: asyncio.Queue[dict[str, Any]]) -> None:
+        # 浏览器关闭、刷新或网络断开时移除对应队列，防止后端继续往无效页面推送。
         self._subscribers.discard(queue)
 
+    # 后台依次运行数据预处理和训练脚本，必要时自动重载新模型。
     async def _run_model_training(
         self,
         labels: list[str],
@@ -598,6 +620,7 @@ class GatewayService:
         finally:
             await self._broadcast("model_training_status", self.get_model_training_status())
 
+    # 异步执行训练子进程并收集 stdout/stderr 作为前端日志。
     async def _run_process(self, command: list[str]) -> dict[str, Any]:
         process = await asyncio.create_subprocess_exec(
             *command,
@@ -623,6 +646,7 @@ class GatewayService:
             return [str(venv_python)]
         return [sys.executable]
 
+    # 列出可训练标签，过滤体验型标签和空的别名目录。
     def _list_training_labels(self) -> list[str]:
         available = set(config.RECOMMENDED_LABELS)
         if self._data_root.exists():
@@ -633,6 +657,7 @@ class GatewayService:
             )
         return sorted(label for label in available if label not in NON_MODEL_LABELS)
 
+    # 规范化标签名并处理中文别名，保证目录名和模型标签一致。
     def _normalize_label_name(self, raw_label: str) -> str:
         normalized = re.sub(r"[\s\-]+", "_", str(raw_label or "").strip().lower())
         normalized = re.sub(r"_+", "_", normalized).strip("_")
@@ -659,6 +684,7 @@ class GatewayService:
     def _now_iso(self) -> str:
         return time.strftime("%Y-%m-%dT%H:%M:%S", time.localtime())
 
+    # 按地址、名称、Service UUID 或 ESP32 关键词选择最可能的设备。
     async def _find_device(
         self,
         *,
@@ -686,6 +712,7 @@ class GatewayService:
 
         raise RuntimeError(f"未找到目标设备，设备名={device_name!r}，地址={address!r}")
 
+    # 兼容不同 bleak 版本的扫描返回格式。
     async def _discover_devices(self, timeout_s: float) -> list[dict[str, Any]]:
         try:
             discovered = await BleakScanner.discover(timeout=timeout_s, return_adv=True)
@@ -701,6 +728,7 @@ class GatewayService:
         devices = await BleakScanner.discover(timeout=timeout_s)
         return self._sort_targets([self._to_target(device, None) for device in devices])
 
+    # 把 bleak 原始设备对象包装成可评分的候选结构。
     def _to_target(self, device: Any, advertisement: Any | None) -> dict[str, Any]:
         name = getattr(device, "name", None)
         local_name = getattr(advertisement, "local_name", None)
@@ -727,6 +755,7 @@ class GatewayService:
             "score": self._candidate_score(info),
         }
 
+    # 给可能是目标 ESP32 的设备打候选标记和原因。
     def _mark_candidate(self, info: DeviceInfo) -> None:
         names = [
             candidate.strip().lower()
@@ -769,12 +798,16 @@ class GatewayService:
     def _sort_targets(self, targets: list[dict[str, Any]]) -> list[dict[str, Any]]:
         return sorted(targets, key=lambda item: item["score"], reverse=True)
 
+    # BLE Notify 回调接口。
+    # 这里不直接做复杂推理，先把字节数据转成字符串，再交给 _process_packet 异步处理，避免阻塞蓝牙回调线程。
     def _notification_handler(self, _: Any, data: bytearray) -> None:
         payload = bytes(data).decode("utf-8", errors="ignore").strip()
         if not payload:
             return
         asyncio.create_task(self._process_packet(payload))
 
+    # 单帧传感器数据处理主链路。
+    # 输入来自 BLE Notify，输出包括：CSV 记录、InferenceEngine 预测、EvaluationEngine 评估、WebSocket 实时广播。
     async def _process_packet(self, payload: str) -> None:
         received_time_ms = int(time.time() * 1000)
         try:
@@ -817,6 +850,7 @@ class GatewayService:
     def _on_ble_disconnect(self, _: BleakClient) -> None:
         asyncio.create_task(self._handle_disconnect())
 
+    # 处理设备意外断开，清理状态并自动结束当前采集。
     async def _handle_disconnect(self) -> None:
         async with self._lock:
             device_address = self._status.device_address
@@ -839,15 +873,19 @@ class GatewayService:
         await self._broadcast("evaluation_status", self._status.evaluation)
         await self._broadcast("advanced_evaluation_status", self._status.advanced_evaluation)
 
+    # 后端内部实时广播接口。
+    # BLE 数据包、模型预测、动作评估、训练状态变化都会通过这里发给所有 WebSocket 客户端。
     async def _broadcast(self, event: str, data: Any) -> None:
         dead_queues: list[asyncio.Queue[dict[str, Any]]] = []
         for queue in self._subscribers:
             try:
+                # put_nowait 不会阻塞 BLE 数据处理；如果某个页面太慢，队列满了就标记为失效。
                 queue.put_nowait({"event": event, "data": data})
             except asyncio.QueueFull:
                 dead_queues.append(queue)
 
         for queue in dead_queues:
+            # 清理跟不上实时流的客户端，保护网关主流程稳定运行。
             self._subscribers.discard(queue)
 
 
